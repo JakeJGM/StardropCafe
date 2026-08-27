@@ -1,13 +1,35 @@
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useState } from 'react';
+import { Image, StyleSheet, Text, View } from 'react-native';
 
 export type BeverageCardProps = {
   name: string;
   temperature: 'Iced' | 'Hot';
-  ingredients: readonly [string, string, string];
+  ingredients: readonly string[];
 };
 
 export default function BeverageCard({ name, temperature, ingredients }: BeverageCardProps) {
-  const isIced = temperature === 'Iced';
+  const [ingredientsRowWidth, setIngredientsRowWidth] = useState(0);
+  const [ingredientWidths, setIngredientWidths] = useState<Record<number, number>>({});
+
+  const allIngredientsMeasured = ingredients.every((_, index) => ingredientWidths[index] !== undefined);
+  const visibleIngredientIndexes = ingredients.map((_, index) => index);
+
+  if (allIngredientsMeasured) {
+    visibleIngredientIndexes.length = 0;
+
+    let occupiedWidth = 0;
+    for (const [index] of ingredients.entries()) {
+      const gapWidth = visibleIngredientIndexes.length > 0 ? 12 : 0;
+      const nextWidth = occupiedWidth + gapWidth + (ingredientWidths[index] ?? 0);
+
+      if (nextWidth <= ingredientsRowWidth) {
+        visibleIngredientIndexes.push(index);
+        occupiedWidth = nextWidth;
+      } else {
+        break;
+      }
+    }
+  }
 
   return (
       <View style={styles.cardContainer}>
@@ -27,11 +49,9 @@ export default function BeverageCard({ name, temperature, ingredients }: Beverag
             </View>
             <View style={styles.details}>
               <View style={styles.detailsHeader}>
-                <Text style={styles.name}>
-                  {"Honey Oat Latte"}
-                </Text>
+                <Text style={styles.name}>{name}</Text>
                 <Text style={styles.temperature}>
-                  {"Iced"}
+                  {temperature}
                 </Text>
               </View>
               <View style={styles.divider}>
@@ -40,22 +60,24 @@ export default function BeverageCard({ name, temperature, ingredients }: Beverag
                 <Text style={styles.contentsTitle}>
                   {"Contents"}
                 </Text>
-                <View style={styles.ingredientsRow}>
-                  <TouchableOpacity style={[styles.ingredientButton, styles.firstIngredientButton]} onPress={()=>alert('Pressed!')}>
-                    <Text style={styles.ingredientText}>
-                      {"Honey"}
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={[styles.ingredientButton, styles.flexIngredientButton, styles.middleIngredientButton]} onPress={()=>alert('Pressed!')}>
-                    <Text style={styles.ingredientText}>
-                      {"Oat Milk"}
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={[styles.ingredientButton, styles.flexIngredientButton]} onPress={()=>alert('Pressed!')}>
-                    <Text style={styles.ingredientText}>
-                      {"Double Shot"}
-                    </Text>
-                  </TouchableOpacity>
+                <View
+                  style={styles.ingredientsRow}
+                  onLayout={({ nativeEvent }) => setIngredientsRowWidth(nativeEvent.layout.width)}>
+                  {ingredients.map((ingredient, index) => visibleIngredientIndexes.includes(index) && (
+                    <View
+                      key={`${ingredient}-${index}`}
+                      style={styles.ingredientPill}
+                      onLayout={({ nativeEvent }) => {
+                        const width = nativeEvent.layout.width;
+                        setIngredientWidths((currentWidths) => (
+                          currentWidths[index] === width
+                            ? currentWidths
+                            : { ...currentWidths, [index]: width }
+                        ));
+                      }}>
+                      <Text style={styles.ingredientText}>{ingredient}</Text>
+                    </View>
+                  ))}
                 </View>
               </View>
             </View>
@@ -166,23 +188,18 @@ const styles = StyleSheet.create({
   ingredientsRow: {
     alignItems: 'center',
     flexDirection: 'row',
+    gap: 12,
+    overflow: 'hidden',
   },
-  ingredientButton: {
+  ingredientPill: {
+    alignItems: 'center',
     borderColor: '#344E43',
     borderRadius: 232,
     borderWidth: 2,
-    paddingVertical: 18,
-  },
-  firstIngredientButton: {
-    marginRight: 20,
-    paddingHorizontal: 28,
-  },
-  flexIngredientButton: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  middleIngredientButton: {
-    marginRight: 19,
+    height: 72,
+    justifyContent: 'center',
+    paddingHorizontal: 18,
+    flexShrink: 0,
   },
   ingredientText: {
     color: '#3C3C43',
@@ -200,6 +217,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     width: 43,
+    zIndex: 2,
   },
   rightBorder: {
     bottom: 0,
