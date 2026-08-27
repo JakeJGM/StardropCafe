@@ -1,98 +1,74 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import CoffeeCard, { type CoffeeCardProps } from '@/components/coffee-card';
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
+const coffeeDrinks: CoffeeCardProps[] = [
+  { name: 'Maple Oat Latte', temperature: 'Hot', ingredients: ['Espresso', 'Oat milk', 'Maple syrup'] },
+  { name: 'Citrus Cold Brew', temperature: 'Iced', ingredients: ['Cold brew', 'Orange peel', 'Vanilla cream'] },
+  { name: 'Brown Sugar Cortado', temperature: 'Hot', ingredients: ['Espresso', 'Brown sugar syrup', 'Steamed milk'] },
+  { name: 'Vanilla Salt Iced Latte', temperature: 'Iced', ingredients: ['Espresso', 'Vanilla syrup', 'Sea salt foam'] },
+  { name: 'Honey Almond Mocha', temperature: 'Hot', ingredients: ['Espresso', 'Cocoa', 'Almond milk'] },
+  { name: 'Cinnamon Cream Brew', temperature: 'Iced', ingredients: ['Cold brew', 'Cinnamon', 'Sweet cream'] },
+];
 
 export default function HomeScreen() {
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
-
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <FlatList
+        contentContainerStyle={styles.content}
+        data={coffeeDrinks}
+        keyExtractor={(drink) => drink.name}
+        ListHeaderComponent={
+          <View style={styles.header}>
+            <Text style={styles.eyebrow}>Stardrop Cafe</Text>
+            <Text style={styles.title}>Coffee menu</Text>
+            <Text style={styles.subtitle}>A simple, scrollable card list to build on.</Text>
+          </View>
+        }
+        renderItem={({ item }) => <CoffeeCard {...item} />}
+        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        showsVerticalScrollIndicator={false}
+      />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
   safeArea: {
     flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
+    backgroundColor: '#F6F1E8',
   },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+  content: {
+    width: '100%',
+    maxWidth: 720,
+    alignSelf: 'center',
+    padding: 24,
+    paddingBottom: 40,
   },
-  title: {
-    textAlign: 'center',
+  header: {
+    marginBottom: 24,
   },
-  code: {
+  eyebrow: {
+    color: '#A05A35',
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 1.5,
     textTransform: 'uppercase',
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+  title: {
+    color: '#2B211C',
+    fontSize: 36,
+    fontWeight: '800',
+    marginTop: 8,
+  },
+  subtitle: {
+    color: '#796A60',
+    fontSize: 16,
+    lineHeight: 24,
+    marginTop: 8,
+  },
+  separator: {
+    height: 14,
   },
 });
