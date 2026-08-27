@@ -1,9 +1,9 @@
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import CoffeeCard, { type CoffeeCardProps } from '@/components/coffee-card';
+import BeverageCard, { type BeverageCardProps } from '@/components/beverage-card';
 
-const coffeeDrinks: CoffeeCardProps[] = [
+const coffeeDrinks: BeverageCardProps[] = [
   { name: 'Maple Oat Latte', temperature: 'Hot', ingredients: ['Espresso', 'Oat milk', 'Maple syrup'] },
   { name: 'Citrus Cold Brew', temperature: 'Iced', ingredients: ['Cold brew', 'Orange peel', 'Vanilla cream'] },
   { name: 'Brown Sugar Cortado', temperature: 'Hot', ingredients: ['Espresso', 'Brown sugar syrup', 'Steamed milk'] },
@@ -23,10 +23,9 @@ export default function HomeScreen() {
           <View style={styles.header}>
             <Text style={styles.eyebrow}>Stardrop Cafe</Text>
             <Text style={styles.title}>Coffee menu</Text>
-            <Text style={styles.subtitle}>A simple, scrollable card list to build on.</Text>
           </View>
         }
-        renderItem={({ item }) => <CoffeeCard {...item} />}
+        renderItem={({ item }) => <BeverageCard {...item} />}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         showsVerticalScrollIndicator={false}
       />
