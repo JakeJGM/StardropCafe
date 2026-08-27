@@ -33,20 +33,20 @@ export default function BeverageCard({ name, temperature, ingredients }: Beverag
 
   return (
       <View style={styles.cardContainer}>
-        <View style={styles.card}>
+        <View style={styles.outerBorder}>
+          <View style={styles.innerBorder}>
+            <View style={styles.innerCardBorder}>
+              <View style={styles.card}>
           <View style={styles.topSection}>
-            <View style={styles.topLeftAccent}>
-            </View>
             <Image style={styles.centerImage}
-              source = {{uri: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/okovP8RcFA/2n57nagz_expires_30_days.png"}} 
-              resizeMode = {"stretch"}
+              source={require('../../assets/images/beverage_card/2n57nagz_expires_30_days.png')}
+              resizeMode="contain"
             />
-            <View style={styles.topRightAccent}>
-            </View>
+          </View>
+          <View style={styles.sectionDivider}>
+            <View style={styles.sectionDividerBand} />
           </View>
           <View style={styles.bottomSection}>
-            <View style={styles.bottomLeftAccent}>
-            </View>
             <View style={styles.details}>
               <View style={styles.detailsHeader}>
                 <Text style={styles.name}>{name}</Text>
@@ -81,49 +81,41 @@ export default function BeverageCard({ name, temperature, ingredients }: Beverag
                 </View>
               </View>
             </View>
-            <View style={styles.bottomRightAccent}>
+          </View>
+              </View>
             </View>
           </View>
         </View>
-        <Image style={styles.leftBorder}
-          source = {{uri: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/okovP8RcFA/chkb6aj3_expires_30_days.png"}} 
-          resizeMode = {"stretch"}
-        />
-        <Image style={styles.rightBorder}
-          source = {{uri: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/okovP8RcFA/b8h2u6zo_expires_30_days.png"}} 
-          resizeMode = {"stretch"}
-        />
-        <Image style={styles.topBorder}
-          source = {{uri: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/okovP8RcFA/i3altrhd_expires_30_days.png"}} 
-          resizeMode = {"stretch"}
-        />
-        <Image style={styles.bottomBorder}
-          source = {{uri: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/okovP8RcFA/g28mu4ts_expires_30_days.png"}} 
-          resizeMode = {"stretch"}
-        />
-        <Image style={styles.middleBorder}
-          source = {{uri: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/okovP8RcFA/40xgnh32_expires_30_days.png"}} 
-          resizeMode = {"stretch"}
-        />
       </View>
   );
 }
 
 const styles = StyleSheet.create({
   cardContainer: {
-    backgroundColor: '#FFFFFF',
     marginBottom: 48,
     paddingHorizontal: 22,
     paddingVertical: 28,
   },
+  outerBorder: {
+    backgroundColor: '#b14e05',
+    padding: 10,
+  },
+  innerBorder: {
+    backgroundColor: '#dc7b05',
+    padding: 10,
+  },
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 27,
+  },
+  innerCardBorder: {
+    backgroundColor: '#853605',
+    padding: 10,
   },
   topSection: {
+    alignItems: 'center',
     backgroundColor: '#FFC97980',
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     paddingHorizontal: 21,
   },
   topLeftAccent: {
@@ -137,6 +129,16 @@ const styles = StyleSheet.create({
     height: 335,
     marginTop: 90,
     width: 308,
+  },
+  sectionDivider: {
+    backgroundColor: '#853605',
+    height: 30,
+    marginHorizontal: -10,
+    paddingVertical: 10,
+  },
+  sectionDividerBand: {
+    backgroundColor: '#dc7b05',
+    flex: 1,
   },
   topRightAccent: {
     backgroundColor: '#C47A48',
@@ -209,43 +211,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#C47A48',
     height: 414,
     width: 15,
-  },
-  leftBorder: {
-    bottom: 0,
-    flex: 1,
-    left: 0,
-    position: 'absolute',
-    top: 0,
-    width: 43,
-    zIndex: 2,
-  },
-  rightBorder: {
-    bottom: 0,
-    flex: 1,
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    width: 43,
-  },
-  topBorder: {
-    left: 33,
-    position: 'absolute',
-    right: 33,
-    top: 0,
-    height: 40,
-  },
-  bottomBorder: {
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-    right: 0,
-    height: 38,
-  },
-  middleBorder: {
-    bottom: 448,
-    left: 0,
-    position: 'absolute',
-    right: 0,
-    height: 38,
   },
 });
