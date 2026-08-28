@@ -3,11 +3,17 @@ import { Image, StyleSheet, Text, View } from 'react-native';
 
 export type BeverageCardProps = {
   name: string;
+  beverageType: 'Coffee' | 'Tea';
   temperature: 'Iced' | 'Hot';
   ingredients: readonly string[];
 };
 
-export default function BeverageCard({ name, temperature, ingredients }: BeverageCardProps) {
+const beverageImages = {
+  Coffee: require('../../assets/images/beverage_card/coffee.webp'),
+  Tea: require('../../assets/images/beverage_card/green-tea.webp'),
+} as const;
+
+export default function BeverageCard({ name, beverageType, temperature, ingredients }: BeverageCardProps) {
   const [ingredientsRowWidth, setIngredientsRowWidth] = useState(0);
   const [ingredientWidths, setIngredientWidths] = useState<Record<number, number>>({});
 
@@ -32,61 +38,61 @@ export default function BeverageCard({ name, temperature, ingredients }: Beverag
   }
 
   return (
-      <View style={styles.cardContainer}>
-        <View style={styles.outerBorder}>
-          <View style={styles.innerBorder}>
-            <View style={styles.innerCardBorder}>
-              <View style={styles.card}>
-          <View style={styles.topSection}>
-            <Image style={styles.centerImage}
-              source={require('../../assets/images/beverage_card/2n57nagz_expires_30_days.png')}
-              resizeMode="contain"
-            />
-          </View>
-          <View style={styles.sectionDivider}>
-            <View style={styles.sectionDividerBand} />
-          </View>
-          <View style={styles.bottomSection}>
-            <View style={styles.details}>
-              <View style={styles.detailsHeader}>
-                <Text style={styles.name}>{name}</Text>
-                <Text style={styles.temperature}>
-                  {temperature}
-                </Text>
+    <View style={styles.cardContainer}>
+      <View style={styles.outerBorder}>
+        <View style={styles.innerBorder}>
+          <View style={styles.innerCardBorder}>
+            <View style={styles.card}>
+              <View style={styles.topSection}>
+                <Image style={styles.coffeeCupImage}
+                  source={beverageImages[beverageType]}
+                  resizeMode="contain"
+                />
               </View>
-              <View style={styles.divider}>
-              </View>
-              <View style={styles.contents}>
-                <Text style={styles.contentsTitle}>
-                  {"Contents"}
-                </Text>
-                <View
-                  style={styles.ingredientsRow}
-                  onLayout={({ nativeEvent }) => setIngredientsRowWidth(nativeEvent.layout.width)}>
-                  {ingredients.map((ingredient, index) => visibleIngredientIndexes.includes(index) && (
-                    <View
-                      key={`${ingredient}-${index}`}
-                      style={styles.ingredientPill}
-                      onLayout={({ nativeEvent }) => {
-                        const width = nativeEvent.layout.width;
-                        setIngredientWidths((currentWidths) => (
-                          currentWidths[index] === width
-                            ? currentWidths
-                            : { ...currentWidths, [index]: width }
-                        ));
-                      }}>
-                      <Text style={styles.ingredientText}>{ingredient}</Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
+        <View style={styles.sectionDivider}>
+          <View style={styles.sectionDividerBand} />
+        </View>
+        <View style={styles.bottomSection}>
+          <View style={styles.details}>
+            <View style={styles.detailsHeader}>
+              <Text style={styles.name}>{name}</Text>
+              <Text style={styles.temperature}>
+                {beverageType} · {temperature}
+              </Text>
             </View>
-          </View>
+            <View style={styles.divider}>
+            </View>
+            <View style={styles.contents}>
+              <Text style={styles.contentsTitle}>
+                {"Contents"}
+              </Text>
+              <View
+                style={styles.ingredientsRow}
+                onLayout={({ nativeEvent }) => setIngredientsRowWidth(nativeEvent.layout.width)}>
+                {ingredients.map((ingredient, index) => visibleIngredientIndexes.includes(index) && (
+                  <View
+                    key={`${ingredient}-${index}`}
+                    style={styles.ingredientPill}
+                    onLayout={({ nativeEvent }) => {
+                      const width = nativeEvent.layout.width;
+                      setIngredientWidths((currentWidths) => (
+                        currentWidths[index] === width
+                          ? currentWidths
+                          : { ...currentWidths, [index]: width }
+                      ));
+                    }}>
+                    <Text style={styles.ingredientText}>{ingredient}</Text>
+                  </View>
+                ))}
               </View>
             </View>
           </View>
         </View>
+            </View>
+          </View>
+        </View>
       </View>
+    </View>
   );
 }
 
@@ -99,6 +105,7 @@ const styles = StyleSheet.create({
   outerBorder: {
     backgroundColor: '#b14e05',
     padding: 10,
+    borderRadius: 10,
   },
   innerBorder: {
     backgroundColor: '#dc7b05',
@@ -125,9 +132,10 @@ const styles = StyleSheet.create({
     marginTop: 12,
     width: 10,
   },
-  centerImage: {
+  coffeeCupImage: {
     height: 335,
-    marginTop: 90,
+    marginTop: 50,
+    marginBottom: 50,
     width: 308,
   },
   sectionDivider: {
@@ -167,24 +175,29 @@ const styles = StyleSheet.create({
   },
   name: {
     color: '#000000',
-    fontSize: 41,
-    marginBottom: 9,
+    fontFamily: 'StardewFont',
+    fontSize: 50,
+    marginBottom: 10,
+    marginTop: 20
   },
   temperature: {
     color: '#181818',
+    fontFamily: 'StardewFont',
     fontSize: 32,
   },
   divider: {
-    backgroundColor: '#344E43',
+    backgroundColor: '#853605',
     height: 2,
     marginBottom: 37,
   },
   contents: {
     marginRight: 73,
+    marginBottom: 25,
   },
   contentsTitle: {
     color: '#181818',
-    fontSize: 32,
+    fontFamily: 'StardewFont',
+    fontSize: 35,
     marginBottom: 18,
   },
   ingredientsRow: {
@@ -195,8 +208,8 @@ const styles = StyleSheet.create({
   },
   ingredientPill: {
     alignItems: 'center',
-    borderColor: '#344E43',
-    borderRadius: 232,
+    borderColor: '#853605',
+    borderRadius: 10,
     borderWidth: 2,
     height: 72,
     justifyContent: 'center',
@@ -205,6 +218,7 @@ const styles = StyleSheet.create({
   },
   ingredientText: {
     color: '#3C3C43',
+    fontFamily: 'StardewFont',
     fontSize: 27,
   },
   bottomRightAccent: {

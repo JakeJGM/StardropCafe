@@ -3,13 +3,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import BeverageCard, { type BeverageCardProps } from '@/components/beverage-card';
 
-const coffeeDrinks: BeverageCardProps[] = [
-  { name: 'Maple Oat Latte', temperature: 'Hot', ingredients: ['Espresso', 'Oat milk', 'Maple syrup'] },
-  { name: 'Citrus Cold Brew', temperature: 'Iced', ingredients: ['Cold brew', 'Orange peel', 'Vanilla cream'] },
-  { name: 'Brown Sugar Cortado', temperature: 'Hot', ingredients: ['Espresso', 'Brown sugar syrup', 'Steamed milk'] },
-  { name: 'Vanilla Salt Iced Latte', temperature: 'Iced', ingredients: ['Espresso', 'Vanilla syrup', 'Sea salt foam'] },
-  { name: 'Honey Almond Mocha', temperature: 'Hot', ingredients: ['Espresso', 'Cocoa', 'Almond milk'] },
-  { name: 'Cinnamon Cream Brew', temperature: 'Iced', ingredients: ['Cold brew', 'Cinnamon', 'Sweet cream'] },
+const beverages: BeverageCardProps[] = [
+  { name: 'Maple Oat Latte', beverageType: 'Coffee', temperature: 'Hot', ingredients: ['Espresso', 'Oat milk', 'Maple'] },
+  { name: 'Citrus Cold Brew', beverageType: 'Coffee', temperature: 'Iced', ingredients: ['Cold brew', 'Orange peel', 'Vanilla cream'] },
+  { name: 'Brown Sugar Cortado', beverageType: 'Coffee', temperature: 'Hot', ingredients: ['Espresso', 'Brown sugar syrup', 'Steamed milk'] },
+  { name: 'Vanilla Salt Iced Latte', beverageType: 'Coffee', temperature: 'Iced', ingredients: ['Espresso', 'Vanilla syrup', 'Sea salt foam'] },
+  { name: 'Honey Almond Mocha', beverageType: 'Coffee', temperature: 'Hot', ingredients: ['Espresso', 'Cocoa', 'Almond milk'] },
+  { name: 'Cinnamon Cream Brew', beverageType: 'Coffee', temperature: 'Iced', ingredients: ['Cold brew', 'Cinnamon', 'Sweet cream'] },
+  { name: 'Green Tea Latte', beverageType: 'Tea', temperature: 'Hot', ingredients: ['Matcha', 'Steamed milk', 'Honey'] },
 ];
 
 export default function HomeScreen() {
@@ -17,7 +18,7 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <FlatList
         contentContainerStyle={styles.content}
-        data={coffeeDrinks}
+        data={beverages}
         keyExtractor={(drink) => drink.name}
         ListHeaderComponent={
           <View style={styles.header}>
@@ -36,7 +37,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F6F1E8',
+    backgroundColor: '#989675',
   },
   content: {
     width: '100%',
@@ -50,6 +51,7 @@ const styles = StyleSheet.create({
   },
   eyebrow: {
     color: '#A05A35',
+    fontFamily: 'SourceCodeProBold',
     fontSize: 13,
     fontWeight: '700',
     letterSpacing: 1.5,
@@ -57,6 +59,7 @@ const styles = StyleSheet.create({
   },
   title: {
     color: '#2B211C',
+    fontFamily: 'SourceCodeProBold',
     fontSize: 36,
     fontWeight: '800',
     marginTop: 8,
