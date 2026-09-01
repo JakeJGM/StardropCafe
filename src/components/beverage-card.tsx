@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 export type BeverageCardProps = {
+  uuid: string;
   name: string;
   beverageType: 'Coffee' | 'Tea';
   temperature: 'Iced' | 'Hot';
@@ -14,7 +15,7 @@ const beverageImages = {
   Tea: require('../../assets/images/beverage_card/green-tea.webp'),
 } as const;
 
-export default function BeverageCard({ name, beverageType, temperature, ingredients }: BeverageCardProps) {
+export default function BeverageCard({ uuid, name, beverageType, temperature, ingredients }: BeverageCardProps) {
   const [ingredientsRowWidth, setIngredientsRowWidth] = useState(0);
   const [ingredientWidths, setIngredientWidths] = useState<Record<number, number>>({});
 
@@ -41,7 +42,7 @@ export default function BeverageCard({ name, beverageType, temperature, ingredie
   return (
     <Pressable
       accessibilityRole="button"
-      onPress={() => router.push({ pathname: '/beverage/[name]', params: { name } })}
+      onPress={() => router.push({ pathname: '/beverage/[uuid]', params: { uuid } })}
       style={({ pressed }) => [styles.cardContainer, pressed && styles.cardPressed]}
     >
       <View style={styles.outerBorder}>
