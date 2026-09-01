@@ -1,7 +1,8 @@
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import BeverageCard, { type BeverageCardProps } from '@/components/beverage-card';
+import { Text } from '@/components/text';
 import { useTheme } from '@/hooks/use-theme';
 
 const beverages: BeverageCardProps[] = [
@@ -53,17 +54,13 @@ const styles = StyleSheet.create({
   },
   eyebrow: {
     color: '#A05A35',
-    fontFamily: 'SourceCodeProBold',
     fontSize: 13,
-    fontWeight: '700',
     letterSpacing: 1.5,
     textTransform: 'uppercase',
   },
   title: {
     color: '#2B211C',
-    fontFamily: 'SourceCodeProBold',
     fontSize: 36,
-    fontWeight: '800',
     marginTop: 8,
   },
   subtitle: {

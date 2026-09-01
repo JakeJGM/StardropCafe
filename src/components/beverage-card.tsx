@@ -1,6 +1,8 @@
-import { useState } from 'react';
 import { router } from 'expo-router';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
+
+import { Text } from '@/components/text';
 
 export type BeverageCardProps = {
   uuid: string;
@@ -184,14 +186,12 @@ const styles = StyleSheet.create({
   },
   name: {
     color: '#000000',
-    fontFamily: 'StardewFont',
     fontSize: 50,
     marginBottom: 10,
     marginTop: 20
   },
   temperature: {
     color: '#181818',
-    fontFamily: 'StardewFont',
     fontSize: 32,
   },
   divider: {
@@ -205,7 +205,6 @@ const styles = StyleSheet.create({
   },
   contentsTitle: {
     color: '#181818',
-    fontFamily: 'StardewFont',
     fontSize: 35,
     marginBottom: 18,
   },
@@ -227,7 +226,6 @@ const styles = StyleSheet.create({
   },
   ingredientText: {
     color: '#3C3C43',
-    fontFamily: 'StardewFont',
     fontSize: 27,
   },
   bottomRightAccent: {
