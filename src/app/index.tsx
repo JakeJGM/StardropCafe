@@ -2,6 +2,7 @@ import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import BeverageCard, { type BeverageCardProps } from '@/components/beverage-card';
+import { useTheme } from '@/hooks/use-theme';
 
 const beverages: BeverageCardProps[] = [
   { name: 'Maple Oat Latte', beverageType: 'Coffee', temperature: 'Hot', ingredients: ['Espresso', 'Oat milk', 'Maple'] },
@@ -14,8 +15,10 @@ const beverages: BeverageCardProps[] = [
 ];
 
 export default function HomeScreen() {
+  const theme = useTheme();
+
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]} edges={['top']}>
       <FlatList
         contentContainerStyle={styles.content}
         data={beverages}
@@ -37,7 +40,6 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#989675',
   },
   content: {
     width: '100%',
