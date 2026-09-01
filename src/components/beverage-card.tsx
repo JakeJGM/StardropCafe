@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { router } from 'expo-router';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 export type BeverageCardProps = {
   name: string;
@@ -38,7 +39,11 @@ export default function BeverageCard({ name, beverageType, temperature, ingredie
   }
 
   return (
-    <View style={styles.cardContainer}>
+    <Pressable
+      accessibilityRole="button"
+      onPress={() => router.push({ pathname: '/beverage/[name]', params: { name } })}
+      style={({ pressed }) => [styles.cardContainer, pressed && styles.cardPressed]}
+    >
       <View style={styles.outerBorder}>
         <View style={styles.innerBorder}>
           <View style={styles.innerCardBorder}>
@@ -92,7 +97,7 @@ export default function BeverageCard({ name, beverageType, temperature, ingredie
           </View>
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -101,6 +106,9 @@ const styles = StyleSheet.create({
     marginBottom: 48,
     paddingHorizontal: 22,
     paddingVertical: 28,
+  },
+  cardPressed: {
+    opacity: 0.85,
   },
   outerBorder: {
     backgroundColor: '#b14e05',
