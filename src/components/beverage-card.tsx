@@ -1,7 +1,11 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
+
+import { Text } from '@/components/text';
 
 export type BeverageCardProps = {
+  uuid: string;
   name: string;
   beverageType: 'Coffee' | 'Tea';
   temperature: 'Iced' | 'Hot';
@@ -13,7 +17,7 @@ const beverageImages = {
   Tea: require('../../assets/images/beverage_card/green-tea.webp'),
 } as const;
 
-export default function BeverageCard({ name, beverageType, temperature, ingredients }: BeverageCardProps) {
+export default function BeverageCard({ uuid, name, beverageType, temperature, ingredients }: BeverageCardProps) {
   const [ingredientsRowWidth, setIngredientsRowWidth] = useState(0);
   const [ingredientWidths, setIngredientWidths] = useState<Record<number, number>>({});
 
@@ -38,7 +42,11 @@ export default function BeverageCard({ name, beverageType, temperature, ingredie
   }
 
   return (
-    <View style={styles.cardContainer}>
+    <Pressable
+      accessibilityRole="button"
+      onPress={() => router.push({ pathname: '/beverage/[uuid]', params: { uuid } })}
+      style={({ pressed }) => [styles.cardContainer, pressed && styles.cardPressed]}
+    >
       <View style={styles.outerBorder}>
         <View style={styles.innerBorder}>
           <View style={styles.innerCardBorder}>
@@ -56,9 +64,7 @@ export default function BeverageCard({ name, beverageType, temperature, ingredie
           <View style={styles.details}>
             <View style={styles.detailsHeader}>
               <Text style={styles.name}>{name}</Text>
-              <Text style={styles.temperature}>
-                {beverageType} · {temperature}
-              </Text>
+              <Text style={styles.temperature}>{temperature}</Text>
             </View>
             <View style={styles.divider}>
             </View>
@@ -92,7 +98,7 @@ export default function BeverageCard({ name, beverageType, temperature, ingredie
           </View>
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -101,6 +107,9 @@ const styles = StyleSheet.create({
     marginBottom: 48,
     paddingHorizontal: 22,
     paddingVertical: 28,
+  },
+  cardPressed: {
+    opacity: 0.85,
   },
   outerBorder: {
     backgroundColor: '#b14e05',
@@ -133,7 +142,7 @@ const styles = StyleSheet.create({
     width: 10,
   },
   coffeeCupImage: {
-    height: 335,
+    height: 200,
     marginTop: 50,
     marginBottom: 50,
     width: 308,
@@ -175,14 +184,12 @@ const styles = StyleSheet.create({
   },
   name: {
     color: '#000000',
-    fontFamily: 'StardewFont',
     fontSize: 50,
     marginBottom: 10,
     marginTop: 20
   },
   temperature: {
     color: '#181818',
-    fontFamily: 'StardewFont',
     fontSize: 32,
   },
   divider: {
@@ -196,7 +203,6 @@ const styles = StyleSheet.create({
   },
   contentsTitle: {
     color: '#181818',
-    fontFamily: 'StardewFont',
     fontSize: 35,
     marginBottom: 18,
   },
@@ -218,7 +224,6 @@ const styles = StyleSheet.create({
   },
   ingredientText: {
     color: '#3C3C43',
-    fontFamily: 'StardewFont',
     fontSize: 27,
   },
   bottomRightAccent: {
