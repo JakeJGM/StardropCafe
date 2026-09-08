@@ -64,9 +64,7 @@ export default function BeverageCard({ uuid, name, beverageType, temperature, in
           <View style={styles.details}>
             <View style={styles.detailsHeader}>
               <Text style={styles.name}>{name}</Text>
-              <Text style={styles.temperature}>
-                {beverageType} · {temperature}
-              </Text>
+              <Text style={styles.temperature}>{temperature}</Text>
             </View>
             <View style={styles.divider}>
             </View>
@@ -144,7 +142,7 @@ const styles = StyleSheet.create({
     width: 10,
   },
   coffeeCupImage: {
-    height: 335,
+    height: 200,
     marginTop: 50,
     marginBottom: 50,
     width: 308,

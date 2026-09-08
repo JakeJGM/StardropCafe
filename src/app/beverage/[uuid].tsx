@@ -24,23 +24,25 @@ export default function BeverageRecipeScreen() {
           <View style={styles.innerBorder}>
             <View style={styles.innerPageBorder}>
               <View style={styles.note}>
-                <View style={styles.noteHeader}>
-                  <Text style={styles.recipeTitle}>Honey Oat Latte</Text>
-                </View>
-                <View style={styles.ingredientListContainer}>
-                  <Text style={styles.sectionTitle}>Ingredients:</Text>
-                  <Text style={styles.recipeText}>• 1 shot of espresso</Text>
-                  <Text style={styles.recipeText}>• 1 cup of milk</Text>
-                  <Text style={styles.recipeText}>• 1 tablespoon of honey</Text>
-                  <Text style={styles.recipeText}>• 1 teaspoon of oat flour</Text>
-                </View>
-                <View style={styles.instructionsContainer}>
-                  <View>
-                    <Text style={styles.sectionTitle}>Instructions:</Text>
-                    <Text style={styles.recipeText}>1. Brew 1 shot of espresso.</Text>
-                    <Text style={styles.recipeText}>2. Heat 1 cup of milk.</Text>
-                    <Text style={styles.recipeText}>3. Mix 1 tablespoon of honey with 1 teaspoon of oat flour.</Text>
-                    <Text style={styles.recipeText}>4. Combine all ingredients and serve.</Text>
+                <View style={styles.noteText}>
+                  <View style={styles.noteHeader}>
+                    <Text style={styles.recipeTitle}>Honey Oat Latte</Text>
+                  </View>
+                  <View style={styles.ingredientListContainer}>
+                    <Text style={styles.sectionTitle}>Ingredients:</Text>
+                    <Text style={styles.recipeText}>• 1 shot of espresso</Text>
+                    <Text style={styles.recipeText}>• 1 cup of milk</Text>
+                    <Text style={styles.recipeText}>• 1 tablespoon of honey</Text>
+                    <Text style={styles.recipeText}>• 1 teaspoon of oat flour</Text>
+                  </View>
+                  <View style={styles.instructionsContainer}>
+                    <View>
+                      <Text style={styles.sectionTitle}>Instructions:</Text>
+                      <Text style={styles.recipeText}>1. Brew 1 shot of espresso.</Text>
+                      <Text style={styles.recipeText}>2. Heat 1 cup of milk.</Text>
+                      <Text style={styles.recipeText}>3. Mix 1 tablespoon of honey with 1 teaspoon of oat flour.</Text>
+                      <Text style={styles.recipeText}>4. Combine all ingredients and serve.</Text>
+                    </View>
                   </View>
                 </View>
               </View>
@@ -93,6 +95,9 @@ const styles = StyleSheet.create({
   note: {
     backgroundColor: '#ffe6b7',
     flex: 1,
+  },
+  noteText: {
+    marginLeft: 10,
   },
   noteHeader: {
     padding: 10,
