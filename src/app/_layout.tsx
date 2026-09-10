@@ -1,7 +1,18 @@
 import { SourceCodePro_400Regular } from '@expo-google-fonts/source-code-pro/400Regular';
 import { SourceCodePro_700Bold } from '@expo-google-fonts/source-code-pro/700Bold';
 import { useFonts } from '@expo-google-fonts/source-code-pro/useFonts';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5,
+      gcTime: 1000 * 60 * 60,
+      retry: 2,
+    },
+  },
+});
 
 import { useTheme } from '@/hooks/use-theme';
 
@@ -19,11 +30,13 @@ export default function RootLayout() {
   }
 
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        contentStyle: { backgroundColor: theme.background },
-      }}
-    />
+    <QueryClientProvider client={queryClient}>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: theme.background },
+        }}
+      />
+    </QueryClientProvider>
   );
 }
