@@ -1,6 +1,9 @@
 package com.example.stardropcafe;
 
 import com.example.stardropcafe.entity.Beverage;
+import com.example.stardropcafe.entity.Ingredient;
+import com.example.stardropcafe.entity.Instruction;
+import com.example.stardropcafe.entity.Recipe;
 import com.example.stardropcafe.repository.BeverageContentRepository;
 import com.example.stardropcafe.repository.BeverageRepository;
 import com.example.stardropcafe.repository.IngredientRepository;
@@ -16,6 +19,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.hasSize;
@@ -152,5 +157,50 @@ class StardropCafeApplicationTests {
                         .content(request))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Beverage temperature must be one of: hot, iced, cold"));
+    }
+
+    @Test
+    void retrievesRecipesWithIngredientsAndInstructions() throws Exception {
+        Recipe recipe = recipeRepository.save(new Recipe());
+
+        Ingredient espresso = new Ingredient();
+        espresso.setName("Espresso");
+        espresso.setUnitType("shot");
+        espresso.setUnitCount(new BigDecimal("2"));
+        espresso.setRecipe(recipe);
+
+        Ingredient milk = new Ingredient();
+        milk.setName("Steamed milk");
+        milk.setUnitType("cup");
+        milk.setUnitCount(new BigDecimal("1.5"));
+        milk.setRecipe(recipe);
+
+        ingredientRepository.saveAll(List.of(espresso, milk));
+
+        Instruction secondStep = new Instruction();
+        secondStep.setStep(2);
+        secondStep.setInstruction("Steam milk.");
+        secondStep.setRecipe(recipe);
+
+        Instruction firstStep = new Instruction();
+        firstStep.setStep(1);
+        firstStep.setInstruction("Pull espresso shots.");
+        firstStep.setRecipe(recipe);
+
+        instructionRepository.saveAll(List.of(secondStep, firstStep));
+
+        mockMvc.perform(get("/recipes"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].id").value(recipe.getId().toString()))
+                .andExpect(jsonPath("$[0].ingredients", hasSize(2)))
+                .andExpect(jsonPath("$[0].ingredients[0].name").value("Espresso"))
+                .andExpect(jsonPath("$[0].ingredients[0].unitType").value("shot"))
+                .andExpect(jsonPath("$[0].ingredients[0].unitCount").value(2))
+                .andExpect(jsonPath("$[0].instructions", hasSize(2)))
+                .andExpect(jsonPath("$[0].instructions[0].step").value(1))
+                .andExpect(jsonPath("$[0].instructions[0].instruction").value("Pull espresso shots."))
+                .andExpect(jsonPath("$[0].instructions[1].step").value(2))
+                .andExpect(jsonPath("$[0].instructions[1].instruction").value("Steam milk."));
     }
 }
