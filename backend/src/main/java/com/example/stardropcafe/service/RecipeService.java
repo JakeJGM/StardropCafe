@@ -25,6 +25,18 @@ public class RecipeService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public Optional<RecipeResponseDTO> findRecipeResponseById(UUID id) {
+        return recipeRepository.findById(id)
+                .map(RecipeResponseDTO::from);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<RecipeResponseDTO> findRecipeResponseByBeverageId(UUID beverageId) {
+        return recipeRepository.findByBeverageId(beverageId)
+                .map(RecipeResponseDTO::from);
+    }
+
     public Recipe save(Recipe recipe) {
         return recipeRepository.save(recipe);
     }
