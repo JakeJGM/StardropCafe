@@ -1,5 +1,7 @@
 package com.example.stardropcafe.service;
 
+import com.example.stardropcafe.dto.BeverageResponseDTO;
+import com.example.stardropcafe.dto.CreateBeverageRequestDTO;
 import com.example.stardropcafe.entity.Beverage;
 import com.example.stardropcafe.repository.BeverageRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,9 +15,36 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class BeverageService {
 
+    private static final List<String> ALLOWED_TYPES = List.of("Coffee", "Tea", "Spirit", "Matcha", "Dirty Soda");
+    private static final List<String> ALLOWED_TEMPERATURES = List.of("hot", "iced", "cold");
+
     private final BeverageRepository beverageRepository;
 
+    public BeverageResponseDTO create(CreateBeverageRequestDTO request) {
+        validateBeverage(request.type(), request.temperature());
+
+        Beverage beverage = new Beverage();
+        beverage.setName(request.name());
+        beverage.setType(request.type());
+        beverage.setTemperature(request.temperature());
+
+        return BeverageResponseDTO.from(beverageRepository.save(beverage));
+    }
+
+    public List<BeverageResponseDTO> findAllBeverageResponses() {
+        return beverageRepository.findAll()
+                .stream()
+                .map(BeverageResponseDTO::from)
+                .toList();
+    }
+
+    public Optional<BeverageResponseDTO> findBeverageResponseById(UUID id) {
+        return beverageRepository.findById(id)
+                .map(BeverageResponseDTO::from);
+    }
+
     public Beverage save(Beverage beverage) {
+        validateBeverage(beverage.getType(), beverage.getTemperature());
         return beverageRepository.save(beverage);
     }
 
@@ -29,5 +58,15 @@ public class BeverageService {
 
     public void deleteById(UUID id) {
         beverageRepository.deleteById(id);
+    }
+
+    private void validateBeverage(String type, String temperature) {
+        if (!ALLOWED_TYPES.contains(type)) {
+            throw new IllegalArgumentException("Beverage type must be one of: " + String.join(", ", ALLOWED_TYPES));
+        }
+
+        if (!ALLOWED_TEMPERATURES.contains(temperature)) {
+            throw new IllegalArgumentException("Beverage temperature must be one of: " + String.join(", ", ALLOWED_TEMPERATURES));
+        }
     }
 }
