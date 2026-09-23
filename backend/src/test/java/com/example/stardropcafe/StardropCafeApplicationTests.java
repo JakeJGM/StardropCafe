@@ -1,6 +1,7 @@
 package com.example.stardropcafe;
 
 import com.example.stardropcafe.entity.Beverage;
+import com.example.stardropcafe.entity.BeverageContent;
 import com.example.stardropcafe.entity.Ingredient;
 import com.example.stardropcafe.entity.Instruction;
 import com.example.stardropcafe.entity.Recipe;
@@ -21,6 +22,7 @@ import org.springframework.web.context.WebApplicationContext;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.hasSize;
@@ -85,7 +87,7 @@ class StardropCafeApplicationTests {
                 .andExpect(jsonPath("$.name").value("Stardrop Latte"))
                 .andExpect(jsonPath("$.type").value("Coffee"))
                 .andExpect(jsonPath("$.temperature").value("hot"))
-                .andExpect(jsonPath("$.beverageContentIds", hasSize(0)))
+                .andExpect(jsonPath("$.beverageContents", hasSize(0)))
                 .andExpect(jsonPath("$.recipeId").doesNotExist());
     }
 
@@ -99,24 +101,88 @@ class StardropCafeApplicationTests {
 
         mockMvc.perform(get("/beverages"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].name").value("Green Tea"))
-                .andExpect(jsonPath("$[0].type").value("Tea"))
-                .andExpect(jsonPath("$[0].temperature").value("iced"));
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].name").value("Green Tea"))
+                .andExpect(jsonPath("$.content[0].type").value("Tea"))
+                .andExpect(jsonPath("$.content[0].temperature").value("iced"))
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.size").value(20))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.totalPages").value(1))
+                .andExpect(jsonPath("$.first").value(true))
+                .andExpect(jsonPath("$.last").value(true));
+    }
+
+    @Test
+    void paginatesBeverages() throws Exception {
+        for (int i = 0; i < 3; i++) {
+            Beverage beverage = new Beverage();
+            beverage.setName("Beverage " + i);
+            beverage.setType("Coffee");
+            beverage.setTemperature("hot");
+            beverageRepository.save(beverage);
+        }
+
+        mockMvc.perform(get("/beverages").param("page", "0").param("size", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(2)))
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.size").value(2))
+                .andExpect(jsonPath("$.totalElements").value(3))
+                .andExpect(jsonPath("$.totalPages").value(2))
+                .andExpect(jsonPath("$.first").value(true))
+                .andExpect(jsonPath("$.last").value(false));
+
+        mockMvc.perform(get("/beverages").param("page", "1").param("size", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.page").value(1))
+                .andExpect(jsonPath("$.totalElements").value(3))
+                .andExpect(jsonPath("$.first").value(false))
+                .andExpect(jsonPath("$.last").value(true));
+    }
+
+    @Test
+    void sortsBeveragesByRequestedField() throws Exception {
+        Beverage zebra = new Beverage();
+        zebra.setName("Zebra Mocha");
+        zebra.setType("Coffee");
+        zebra.setTemperature("hot");
+        beverageRepository.save(zebra);
+
+        Beverage apple = new Beverage();
+        apple.setName("Apple Cider Latte");
+        apple.setType("Coffee");
+        apple.setTemperature("hot");
+        beverageRepository.save(apple);
+
+        mockMvc.perform(get("/beverages").param("sort", "name,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(2)))
+                .andExpect(jsonPath("$.content[0].name").value("Apple Cider Latte"))
+                .andExpect(jsonPath("$.content[1].name").value("Zebra Mocha"));
     }
 
     @Test
     void retrievesBeverageById() throws Exception {
+        BeverageContent chocolateSyrup = new BeverageContent();
+        chocolateSyrup.setName("Chocolate syrup");
+        BeverageContent savedContent = beverageContentRepository.save(chocolateSyrup);
+
         Beverage beverage = new Beverage();
         beverage.setName("Mocha");
         beverage.setType("Coffee");
         beverage.setTemperature("hot");
+        beverage.setBeverageContents(Set.of(savedContent));
         Beverage savedBeverage = beverageRepository.save(beverage);
 
         mockMvc.perform(get("/beverages/{id}", savedBeverage.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(savedBeverage.getId().toString()))
-                .andExpect(jsonPath("$.name").value("Mocha"));
+                .andExpect(jsonPath("$.name").value("Mocha"))
+                .andExpect(jsonPath("$.beverageContents", hasSize(1)))
+                .andExpect(jsonPath("$.beverageContents[0].id").value(savedContent.getId().toString()))
+                .andExpect(jsonPath("$.beverageContents[0].name").value("Chocolate syrup"));
     }
 
     @Test
@@ -191,16 +257,20 @@ class StardropCafeApplicationTests {
 
         mockMvc.perform(get("/recipes"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].id").value(recipe.getId().toString()))
-                .andExpect(jsonPath("$[0].ingredients", hasSize(2)))
-                .andExpect(jsonPath("$[0].ingredients[0].name").value("Espresso"))
-                .andExpect(jsonPath("$[0].ingredients[0].unitType").value("shot"))
-                .andExpect(jsonPath("$[0].ingredients[0].unitCount").value(2))
-                .andExpect(jsonPath("$[0].instructions", hasSize(2)))
-                .andExpect(jsonPath("$[0].instructions[0].step").value(1))
-                .andExpect(jsonPath("$[0].instructions[0].instruction").value("Pull espresso shots."))
-                .andExpect(jsonPath("$[0].instructions[1].step").value(2))
-                .andExpect(jsonPath("$[0].instructions[1].instruction").value("Steam milk."));
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].id").value(recipe.getId().toString()))
+                .andExpect(jsonPath("$.content[0].ingredients", hasSize(2)))
+                .andExpect(jsonPath("$.content[0].ingredients[0].name").value("Espresso"))
+                .andExpect(jsonPath("$.content[0].ingredients[0].unitType").value("shot"))
+                .andExpect(jsonPath("$.content[0].ingredients[0].unitCount").value(2))
+                .andExpect(jsonPath("$.content[0].instructions", hasSize(2)))
+                .andExpect(jsonPath("$.content[0].instructions[0].step").value(1))
+                .andExpect(jsonPath("$.content[0].instructions[0].instruction").value("Pull espresso shots."))
+                .andExpect(jsonPath("$.content[0].instructions[1].step").value(2))
+                .andExpect(jsonPath("$.content[0].instructions[1].instruction").value("Steam milk."))
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.size").value(20))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.totalPages").value(1));
     }
 }

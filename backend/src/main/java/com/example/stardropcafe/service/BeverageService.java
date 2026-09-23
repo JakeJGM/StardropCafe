@@ -2,9 +2,11 @@ package com.example.stardropcafe.service;
 
 import com.example.stardropcafe.dto.BeverageResponseDTO;
 import com.example.stardropcafe.dto.CreateBeverageRequestDTO;
+import com.example.stardropcafe.dto.PageResponseDTO;
 import com.example.stardropcafe.entity.Beverage;
 import com.example.stardropcafe.repository.BeverageRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -31,11 +33,9 @@ public class BeverageService {
         return BeverageResponseDTO.from(beverageRepository.save(beverage));
     }
 
-    public List<BeverageResponseDTO> findAllBeverageResponses() {
-        return beverageRepository.findAll()
-                .stream()
-                .map(BeverageResponseDTO::from)
-                .toList();
+    public PageResponseDTO<BeverageResponseDTO> findAllBeverageResponses(Pageable pageable) {
+        return PageResponseDTO.from(beverageRepository.findAll(pageable)
+                .map(BeverageResponseDTO::from));
     }
 
     public Optional<BeverageResponseDTO> findBeverageResponseById(UUID id) {
