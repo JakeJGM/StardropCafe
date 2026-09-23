@@ -2,8 +2,12 @@ package com.example.stardropcafe.controller;
 
 import com.example.stardropcafe.dto.BeverageResponseDTO;
 import com.example.stardropcafe.dto.CreateBeverageRequestDTO;
+import com.example.stardropcafe.dto.PageResponseDTO;
 import com.example.stardropcafe.service.BeverageService;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,7 +19,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -27,8 +30,9 @@ public class BeverageController {
     private final BeverageService beverageService;
 
     @GetMapping
-    public List<BeverageResponseDTO> getBeverages() {
-        return beverageService.findAllBeverageResponses();
+    public PageResponseDTO<BeverageResponseDTO> getBeverages(
+            @ParameterObject @PageableDefault(size = 20, sort = "id") Pageable pageable) {
+        return beverageService.findAllBeverageResponses(pageable);
     }
 
     @GetMapping("/{id}")

@@ -12,15 +12,15 @@ public record BeverageResponseDTO(
         String name,
         String type,
         String temperature,
-        Set<UUID> beverageContentIds,
+        Set<BeverageContentResponseDTO> beverageContents,
         UUID recipeId
 ) {
 
     public static BeverageResponseDTO from(Beverage beverage) {
         UUID recipeId = beverage.getRecipe() == null ? null : beverage.getRecipe().getId();
-        Set<UUID> beverageContentIds = beverage.getBeverageContents()
+        Set<BeverageContentResponseDTO> beverageContents = beverage.getBeverageContents()
                 .stream()
-                .map(BeverageContent::getId)
+                .map(BeverageContentResponseDTO::from)
                 .collect(Collectors.toSet());
 
         return new BeverageResponseDTO(
@@ -28,8 +28,21 @@ public record BeverageResponseDTO(
                 beverage.getName(),
                 beverage.getType(),
                 beverage.getTemperature(),
-                beverageContentIds,
+                beverageContents,
                 recipeId
         );
+    }
+
+    public record BeverageContentResponseDTO(
+            UUID id,
+            String name
+    ) {
+
+        public static BeverageContentResponseDTO from(BeverageContent beverageContent) {
+            return new BeverageContentResponseDTO(
+                    beverageContent.getId(),
+                    beverageContent.getName()
+            );
+        }
     }
 }

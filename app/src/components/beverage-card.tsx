@@ -1,14 +1,15 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { Image, ImageSourcePropType, Pressable, StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/text';
+import { BeverageTemperature, BeverageType } from '@/types/sc-entities';
 
 export type BeverageCardProps = {
   uuid: string;
   name: string;
-  beverageType: 'Coffee' | 'Tea';
-  temperature: 'Iced' | 'Hot';
+  beverageType: BeverageType;
+  temperature: BeverageTemperature;
   ingredients: readonly string[];
 };
 
@@ -16,6 +17,21 @@ const beverageImages = {
   Coffee: require('../../assets/images/beverage_card/coffee.webp'),
   Tea: require('../../assets/images/beverage_card/green-tea.webp'),
 } as const;
+
+// Only two illustrations exist, so the other types borrow the closer of the two.
+const beverageImageByType: Record<BeverageType, ImageSourcePropType> = {
+  Coffee: beverageImages.Coffee,
+  Tea: beverageImages.Tea,
+  Matcha: beverageImages.Tea,
+  Spirit: beverageImages.Coffee,
+  'Dirty Soda': beverageImages.Coffee,
+};
+
+const temperatureLabels: Record<BeverageTemperature, string> = {
+  hot: 'Hot',
+  iced: 'Iced',
+  cold: 'Cold',
+};
 
 export default function BeverageCard({ uuid, name, beverageType, temperature, ingredients }: BeverageCardProps) {
   const [ingredientsRowWidth, setIngredientsRowWidth] = useState(0);
@@ -53,7 +69,7 @@ export default function BeverageCard({ uuid, name, beverageType, temperature, in
             <View style={styles.card}>
               <View style={styles.topSection}>
                 <Image style={styles.coffeeCupImage}
-                  source={beverageImages[beverageType]}
+                  source={beverageImageByType[beverageType]}
                   resizeMode="contain"
                 />
               </View>
@@ -64,7 +80,7 @@ export default function BeverageCard({ uuid, name, beverageType, temperature, in
           <View style={styles.details}>
             <View style={styles.detailsHeader}>
               <Text style={styles.name}>{name}</Text>
-              <Text style={styles.temperature}>{temperature}</Text>
+              <Text style={styles.temperature}>{temperatureLabels[temperature]}</Text>
             </View>
             <View style={styles.divider}>
             </View>
