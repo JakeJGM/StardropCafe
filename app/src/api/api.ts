@@ -1,14 +1,26 @@
-import { Beverage, CreateBeverageRequest, Recipe } from '@/types/sc-entities';
 import {
   PageParams,
   PageResponse,
   PagedResult,
   toPagedResult,
 } from '@/types/api-wrappers';
+import { Beverage, CreateBeverageRequest, Recipe } from '@/types/sc-entities';
 import axios from 'axios';
+import Constants from 'expo-constants';
+
+// Expo only inlines env vars prefixed with EXPO_PUBLIC_ into the client bundle;
+// a bare API_URL is stripped and reads as undefined at runtime.
+const configuredBaseUrl = process.env.EXPO_PUBLIC_API_URL;
+
+// Fallback: the machine serving the Expo bundle also runs the backend. A device
+// on the same network must call that host, since `localhost` is the device itself.
+const devServerHost = Constants.expoConfig?.hostUri?.split(':')[0];
+const inferredBaseUrl = devServerHost ? `http://${devServerHost}:8080` : 'http://localhost:8080';
+
+export const apiBaseUrl = configuredBaseUrl ?? inferredBaseUrl;
 
 const apiClient = axios.create({
-  baseURL: 'http://localhost:8080',
+  baseURL: apiBaseUrl,
   // Spring expects repeated keys (`sort=a&sort=b`), not axios' default `sort[]=a`.
   paramsSerializer: { indexes: null },
 });

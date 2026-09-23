@@ -1,37 +1,108 @@
-import { FlatList, StyleSheet, View } from 'react-native';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import BeverageCard, { type BeverageCardProps } from '@/components/beverage-card';
+import { getBeverages } from '@/api/api';
+import BeverageCard from '@/components/beverage-card';
 import { Text } from '@/components/text';
 import { useTheme } from '@/hooks/use-theme';
+import type { PageParams } from '@/types/api-wrappers';
 
-const beverages: BeverageCardProps[] = [
-  { uuid: '4a7c2d91-0f3e-4c8b-a651-2f9d6e8b1c04', name: 'Maple Oat Latte', beverageType: 'Coffee', temperature: 'Hot', ingredients: ['Espresso', 'Oat milk', 'Maple'] },
-  { uuid: 'b8e14f63-7c29-4a05-9d72-1f6c3a8e2b90', name: 'Citrus Cold Brew', beverageType: 'Coffee', temperature: 'Iced', ingredients: ['Cold brew', 'Orange peel', 'Vanilla cream'] },
-  { uuid: 'd2f6a809-35be-4c17-b964-8a1e5d7f3c26', name: 'Brown Sugar Cortado', beverageType: 'Coffee', temperature: 'Hot', ingredients: ['Espresso', 'Brown sugar syrup', 'Steamed milk'] },
-  { uuid: '6c9b2e47-a1d8-4f53-8b06-e7c2a94d5f31', name: 'Vanilla Salt Iced Latte', beverageType: 'Coffee', temperature: 'Iced', ingredients: ['Espresso', 'Vanilla syrup', 'Sea salt foam'] },
-  { uuid: 'e5a3c718-92d4-4b6f-8e10-3c7a1d9b2f65', name: 'Honey Almond Mocha', beverageType: 'Coffee', temperature: 'Hot', ingredients: ['Espresso', 'Cocoa', 'Almond milk'] },
-  { uuid: '1f8d4a62-c7b3-49e0-a516-6b2e9c5d7f84', name: 'Cinnamon Cream Brew', beverageType: 'Coffee', temperature: 'Iced', ingredients: ['Cold brew', 'Cinnamon', 'Sweet cream'] },
-  { uuid: '9b2e6d40-f1a7-4c85-8d39-5e0b3a7c2f16', name: 'Green Tea Latte', beverageType: 'Tea', temperature: 'Hot', ingredients: ['Matcha', 'Steamed milk', 'Honey'] },
-];
+const PAGE_SIZE = 20;
+
+// Sorted server-side so page boundaries stay stable as beverages are added.
+const firstPageParams: PageParams = { page: 0, size: PAGE_SIZE, sort: 'name,asc' };
 
 export default function HomeScreen() {
   const theme = useTheme();
+
+  const {
+    data,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isPending,
+    refetch,
+  } = useInfiniteQuery({
+    // One cache entry holds every page loaded so far, so pages already fetched
+    // are never re-requested while the query is fresh (staleTime is 5m).
+    queryKey: ['beverages', firstPageParams],
+    queryFn: ({ pageParam }) => getBeverages(pageParam),
+    initialPageParam: firstPageParams,
+    getNextPageParam: (lastPage) => lastPage.nextPageParams ?? undefined,
+  });
+
+  const beverages = useMemo(
+    () => data?.pages.flatMap((page) => page.items) ?? [],
+    [data],
+  );
+
+  const loadNextPage = () => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  };
+
+  const header = (
+    <View style={styles.header}>
+      <Text style={styles.eyebrow}>Stardrop Cafe</Text>
+      <Text style={styles.title}>Coffee menu</Text>
+    </View>
+  );
+
+  if (isPending) {
+    return (
+      <SafeAreaView style={[styles.safeArea, styles.centered, { backgroundColor: theme.background }]} edges={['top']}>
+        <ActivityIndicator color={theme.text} size="large" />
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={[styles.safeArea, styles.centered, { backgroundColor: theme.background }]} edges={['top']}>
+        <Text style={[styles.message, { color: theme.text }]}>Could not load the menu.</Text>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => refetch()}
+          style={({ pressed }) => [styles.retryButton, pressed && styles.retryButtonPressed]}
+        >
+          <Text style={[styles.retryText, { color: theme.text }]}>Try again</Text>
+        </Pressable>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]} edges={['top']}>
       <FlatList
         contentContainerStyle={styles.content}
         data={beverages}
-        keyExtractor={(drink) => drink.uuid}
-        ListHeaderComponent={
-          <View style={styles.header}>
-            <Text style={styles.eyebrow}>Stardrop Cafe</Text>
-            <Text style={styles.title}>Coffee menu</Text>
-          </View>
+        keyExtractor={(beverage) => beverage.id}
+        ListHeaderComponent={header}
+        ListEmptyComponent={
+          <Text style={[styles.message, { color: theme.text }]}>No beverages on the menu yet.</Text>
         }
-        renderItem={({ item }) => <BeverageCard {...item} />}
+        ListFooterComponent={
+          isFetchingNextPage
+            ? <ActivityIndicator color={theme.text} style={styles.footerSpinner} />
+            : null
+        }
+        renderItem={({ item }) => (
+          <BeverageCard
+            uuid={item.id}
+            name={item.name}
+            beverageType={item.type}
+            temperature={item.temperature}
+            // The backend serializes contents as a set, so order isn't guaranteed.
+            ingredients={item.beverageContents.map((content) => content.name).sort()}
+          />
+        )}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
+        onEndReached={loadNextPage}
+        onEndReachedThreshold={0.5}
         showsVerticalScrollIndicator={false}
       />
     </SafeAreaView>
@@ -41,6 +112,10 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+  },
+  centered: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   content: {
     width: '100%',
@@ -68,6 +143,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 24,
     marginTop: 8,
+  },
+  message: {
+    fontSize: 18,
+    textAlign: 'center',
+  },
+  retryButton: {
+    marginTop: 16,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+  },
+  retryButtonPressed: {
+    opacity: 0.65,
+  },
+  retryText: {
+    fontFamily: 'StardewFontBold',
+    fontSize: 22,
+  },
+  footerSpinner: {
+    marginVertical: 24,
   },
   separator: {
     height: 14,

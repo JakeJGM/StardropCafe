@@ -1,16 +1,25 @@
 export interface Beverage {
   id: string,
   name: string,
-  type: string,
-  temperature: string,
-  beverageContentIds: string[],
+  type: BeverageType,
+  temperature: BeverageTemperature,
+  beverageContents: BeverageContent[],
   recipeId: string | null
+}
+
+export type BeverageType = 'Coffee' | 'Tea' | 'Spirit' | 'Matcha' | 'Dirty Soda';
+
+export type BeverageTemperature = 'hot' | 'iced' | 'cold';
+
+export interface BeverageContent {
+  id: string,
+  name: string
 }
 
 export interface CreateBeverageRequest {
   name: string,
-  type: string,
-  temperature: string
+  type: BeverageType,
+  temperature: BeverageTemperature
 }
 
 export interface Ingredient {
