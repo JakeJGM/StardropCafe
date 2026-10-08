@@ -1,121 +1,104 @@
 import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
+import type { Beverage, Recipe } from './api'
+import { BeverageForm } from './components/BeverageForm'
+import { RecipeForm } from './components/RecipeForm'
 import './App.css'
 
+type Step =
+  | { name: 'beverage' }
+  | { name: 'recipe'; beverage: Beverage }
+  | { name: 'done'; beverage: Beverage; recipe: Recipe | null }
+
+const STEP_LABELS = ['Beverage', 'Recipe', 'Done']
+const STEP_INDEX: Record<Step['name'], number> = { beverage: 0, recipe: 1, done: 2 }
+
 function App() {
-  const [count, setCount] = useState(0)
+  const [step, setStep] = useState<Step>({ name: 'beverage' })
+  // Remounting the beverage form on "create another" resets its fields and reloads contents.
+  const [formKey, setFormKey] = useState(0)
+
+  const startOver = () => {
+    setFormKey((key) => key + 1)
+    setStep({ name: 'beverage' })
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
+    <div className="page">
+      <header className="header">
+        <h1>Stardrop Cafe</h1>
+        <p className="muted">Menu editor</p>
+      </header>
+
+      <ol className="stepper" aria-label="Progress">
+        {STEP_LABELS.map((label, index) => (
+          <li
+            key={label}
+            className={index === STEP_INDEX[step.name] ? 'current' : index < STEP_INDEX[step.name] ? 'complete' : ''}
+            aria-current={index === STEP_INDEX[step.name] ? 'step' : undefined}
+          >
+            {label}
+          </li>
+        ))}
+      </ol>
+
+      {step.name === 'beverage' && (
+        <BeverageForm key={formKey} onCreated={(beverage) => setStep({ name: 'recipe', beverage })} />
+      )}
+
+      {step.name === 'recipe' && (
+        <>
+          <p className="alert success">
+            <strong>{step.beverage.name}</strong> was created. Add a recipe now, or skip it.
           </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+          <RecipeForm
+            beverage={step.beverage}
+            onCreated={(recipe) => setStep({ name: 'done', beverage: step.beverage, recipe })}
+            onSkip={() => setStep({ name: 'done', beverage: step.beverage, recipe: null })}
+          />
+        </>
+      )}
 
-      <div className="ticks"></div>
+      {step.name === 'done' && (
+        <section className="card">
+          <h2>{step.beverage.name}</h2>
+          <p className="muted">
+            {step.beverage.type} · {step.beverage.temperature} ·{' '}
+            {step.beverage.beverageContents.map((content) => content.name).join(', ')}
+          </p>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+          {step.recipe ? (
+            <>
+              <h3>Ingredients</h3>
+              <ul>
+                {step.recipe.ingredients.map((ingredient) => (
+                  <li key={ingredient.id}>
+                    {ingredient.unitCount} {ingredient.unitType} of {ingredient.name}
+                  </li>
+                ))}
+              </ul>
+              {step.recipe.instructions.length > 0 && (
+                <>
+                  <h3>Instructions</h3>
+                  <ol>
+                    {step.recipe.instructions.map((instruction) => (
+                      <li key={instruction.id}>{instruction.instruction}</li>
+                    ))}
+                  </ol>
+                </>
+              )}
+            </>
+          ) : (
+            <p>No recipe added.</p>
+          )}
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+          <div className="actions">
+            <button type="button" onClick={startOver}>
+              Create another beverage
+            </button>
+          </div>
+        </section>
+      )}
+    </div>
   )
 }
 

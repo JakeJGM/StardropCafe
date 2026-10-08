@@ -1,5 +1,6 @@
 package com.example.stardropcafe.controller;
 
+import com.example.stardropcafe.dto.BeverageOptionsResponseDTO;
 import com.example.stardropcafe.dto.BeverageResponseDTO;
 import com.example.stardropcafe.dto.CreateBeverageRequestDTO;
 import com.example.stardropcafe.dto.PageResponseDTO;
@@ -9,7 +10,6 @@ import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -35,6 +34,11 @@ public class BeverageController {
         return beverageService.findAllBeverageResponses(pageable);
     }
 
+    @GetMapping("/options")
+    public BeverageOptionsResponseDTO getBeverageOptions() {
+        return beverageService.getOptions();
+    }
+
     @GetMapping("/{id}")
     public BeverageResponseDTO getBeverage(@PathVariable UUID id) {
         return beverageService.findBeverageResponseById(id)
@@ -45,11 +49,5 @@ public class BeverageController {
     @ResponseStatus(HttpStatus.CREATED)
     public BeverageResponseDTO createBeverage(@RequestBody CreateBeverageRequestDTO request) {
         return beverageService.create(request);
-    }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String> handleIllegalArgument(IllegalArgumentException exception) {
-        return Map.of("message", exception.getMessage());
     }
 }

@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -57,11 +58,13 @@ class StardropCafeApplicationTests {
 
     @BeforeEach
     void setUp() {
-        beverageRepository.deleteAll();
-        beverageContentRepository.deleteAll();
-        ingredientRepository.deleteAll();
-        instructionRepository.deleteAll();
-        recipeRepository.deleteAll();
+        // Bulk deletes skip loading entities, which would otherwise trip over
+        // recipes whose beverage was deleted a statement earlier.
+        beverageRepository.deleteAllInBatch();
+        beverageContentRepository.deleteAllInBatch();
+        ingredientRepository.deleteAllInBatch();
+        instructionRepository.deleteAllInBatch();
+        recipeRepository.deleteAllInBatch();
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
     }
 
@@ -75,7 +78,8 @@ class StardropCafeApplicationTests {
                 {
                   "name": "Stardrop Latte",
                   "type": "Coffee",
-                  "temperature": "hot"
+                  "temperature": "hot",
+                  "newBeverageContentNames": ["Espresso"]
                 }
                 """;
 
@@ -87,7 +91,7 @@ class StardropCafeApplicationTests {
                 .andExpect(jsonPath("$.name").value("Stardrop Latte"))
                 .andExpect(jsonPath("$.type").value("Coffee"))
                 .andExpect(jsonPath("$.temperature").value("hot"))
-                .andExpect(jsonPath("$.beverageContents", hasSize(0)))
+                .andExpect(jsonPath("$.beverageContents", hasSize(1)))
                 .andExpect(jsonPath("$.recipeId").doesNotExist());
     }
 
@@ -272,5 +276,192 @@ class StardropCafeApplicationTests {
                 .andExpect(jsonPath("$.size").value(20))
                 .andExpect(jsonPath("$.totalElements").value(1))
                 .andExpect(jsonPath("$.totalPages").value(1));
+    }
+
+    @Test
+    void retrievesBeverageOptions() throws Exception {
+        mockMvc.perform(get("/beverages/options"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.types", hasSize(5)))
+                .andExpect(jsonPath("$.temperatures", hasSize(3)))
+                .andExpect(jsonPath("$.temperatures[0]").value("hot"));
+    }
+
+    @Test
+    void retrievesBeverageContentsSortedByName() throws Exception {
+        beverageContentRepository.saveAll(List.of(beverageContent("Milk"), beverageContent("Espresso")));
+
+        mockMvc.perform(get("/beverage-contents"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].name").value("Espresso"))
+                .andExpect(jsonPath("$[1].name").value("Milk"));
+    }
+
+    @Test
+    void createsBeverageWithExistingAndNewContents() throws Exception {
+        BeverageContent milk = beverageContentRepository.save(beverageContent("Milk"));
+
+        // "milk" matches an existing content ignoring case, so it is reused rather than duplicated.
+        String request = """
+                {
+                  "name": "Honey Latte",
+                  "type": "Coffee",
+                  "temperature": "iced",
+                  "beverageContentIds": ["%s"],
+                  "newBeverageContentNames": ["Honey", "milk", "  "]
+                }
+                """.formatted(milk.getId());
+
+        mockMvc.perform(post("/beverages")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.beverageContents", hasSize(2)))
+                .andExpect(jsonPath("$.beverageContents[*].name", containsInAnyOrder("Milk", "Honey")));
+
+        mockMvc.perform(get("/beverage-contents"))
+                .andExpect(jsonPath("$", hasSize(2)));
+    }
+
+    @Test
+    void rejectsBeverageWithoutContents() throws Exception {
+        String request = """
+                {
+                  "name": "Plain Coffee",
+                  "type": "Coffee",
+                  "temperature": "hot"
+                }
+                """;
+
+        mockMvc.perform(post("/beverages")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Beverage must have between 1 and 3 contents"));
+    }
+
+    @Test
+    void rejectsBeverageWithTooManyContents() throws Exception {
+        String request = """
+                {
+                  "name": "Kitchen Sink",
+                  "type": "Coffee",
+                  "temperature": "hot",
+                  "newBeverageContentNames": ["A", "B", "C", "D"]
+                }
+                """;
+
+        mockMvc.perform(post("/beverages")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(get("/beverage-contents"))
+                .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    @Test
+    void createsRecipeForBeverage() throws Exception {
+        Beverage beverage = beverageRepository.save(beverage("Stardrop Latte"));
+
+        String request = """
+                {
+                  "ingredients": [
+                    {"unitCount": 2, "unitType": "shot", "name": "Espresso"},
+                    {"unitCount": 1.5, "unitType": "cup", "name": "Steamed milk"}
+                  ],
+                  "instructions": ["Pull two shots.", "Steam the milk and combine."]
+                }
+                """;
+
+        mockMvc.perform(post("/recipes/beverage/{beverageId}", beverage.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.beverageId").value(beverage.getId().toString()))
+                .andExpect(jsonPath("$.ingredients", hasSize(2)))
+                .andExpect(jsonPath("$.ingredients[1].unitCount").value(1.5))
+                .andExpect(jsonPath("$.instructions", hasSize(2)))
+                .andExpect(jsonPath("$.instructions[0].step").value(1))
+                .andExpect(jsonPath("$.instructions[1].instruction").value("Steam the milk and combine."));
+
+        mockMvc.perform(get("/recipes/beverage/{beverageId}", beverage.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.ingredients", hasSize(2)));
+        mockMvc.perform(get("/beverages/{id}", beverage.getId()))
+                .andExpect(jsonPath("$.recipeId").isNotEmpty());
+    }
+
+    @Test
+    void createsRecipeWithoutInstructions() throws Exception {
+        Beverage beverage = beverageRepository.save(beverage("Iced Tea"));
+
+        String request = """
+                {"ingredients": [{"unitCount": 1, "unitType": "cup", "name": "Black tea"}]}
+                """;
+
+        mockMvc.perform(post("/recipes/beverage/{beverageId}", beverage.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.instructions", hasSize(0)));
+    }
+
+    @Test
+    void rejectsSecondRecipeForBeverage() throws Exception {
+        Beverage beverage = beverageRepository.save(beverage("Stardrop Latte"));
+        String request = """
+                {"ingredients": [{"unitCount": 2, "unitType": "shot", "name": "Espresso"}]}
+                """;
+
+        mockMvc.perform(post("/recipes/beverage/{beverageId}", beverage.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isCreated());
+        mockMvc.perform(post("/recipes/beverage/{beverageId}", beverage.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Beverage already has a recipe"));
+    }
+
+    @Test
+    void rejectsRecipeWithInvalidIngredient() throws Exception {
+        Beverage beverage = beverageRepository.save(beverage("Stardrop Latte"));
+        String request = """
+                {"ingredients": [{"unitCount": 0, "unitType": "shot", "name": "Espresso"}]}
+                """;
+
+        mockMvc.perform(post("/recipes/beverage/{beverageId}", beverage.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Ingredient unit count must be greater than 0"));
+    }
+
+    @Test
+    void returnsNotFoundWhenCreatingRecipeForMissingBeverage() throws Exception {
+        mockMvc.perform(post("/recipes/beverage/{beverageId}", UUID.randomUUID())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"ingredients": [{"unitCount": 1, "unitType": "cup", "name": "Milk"}]}
+                                """))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Beverage not found"));
+    }
+
+    private Beverage beverage(String name) {
+        Beverage beverage = new Beverage();
+        beverage.setName(name);
+        beverage.setType("Coffee");
+        beverage.setTemperature("hot");
+        return beverage;
+    }
+
+    private BeverageContent beverageContent(String name) {
+        BeverageContent beverageContent = new BeverageContent();
+        beverageContent.setName(name);
+        return beverageContent;
     }
 }
