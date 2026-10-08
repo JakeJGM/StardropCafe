@@ -118,6 +118,16 @@ textarea {
   resize: vertical;
 }
 
+/* Custom arrow: the native one sits flush against the right edge on macOS. */
+select {
+  appearance: none;
+  padding-right: 36px;
+  background-image: var(--select-arrow);
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px;
+}
+
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
@@ -204,11 +214,13 @@ button.secondary:hover:not(:disabled) {
 }
 
 /* Contents picker */
+/* Reserves one row of chips so selecting contents doesn't grow the card. */
 .chips {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin: 0 0 4px;
+  min-height: 32px;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
