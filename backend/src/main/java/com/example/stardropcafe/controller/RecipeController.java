@@ -1,5 +1,6 @@
 package com.example.stardropcafe.controller;
 
+import com.example.stardropcafe.dto.CreateRecipeRequestDTO;
 import com.example.stardropcafe.dto.PageResponseDTO;
 import com.example.stardropcafe.dto.RecipeResponseDTO;
 import com.example.stardropcafe.service.RecipeService;
@@ -10,7 +11,10 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -39,5 +43,13 @@ public class RecipeController {
     public RecipeResponseDTO getRecipeByBeverageId(@PathVariable UUID beverageId) {
         return recipeService.findRecipeResponseByBeverageId(beverageId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found"));
+    }
+
+    @PostMapping("/beverage/{beverageId}")
+    @ResponseStatus(HttpStatus.CREATED)
+    public RecipeResponseDTO createRecipeForBeverage(
+            @PathVariable UUID beverageId,
+            @RequestBody CreateRecipeRequestDTO request) {
+        return recipeService.createForBeverage(beverageId, request);
     }
 }
