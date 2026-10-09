@@ -1,10 +1,13 @@
 import { useState, type FormEvent } from 'react'
-import { createRecipe, type Beverage, type IngredientRequest, type Recipe } from '../api'
+import { createRecipe, updateRecipe, type Beverage, type IngredientRequest, type Recipe } from '../api'
 
 type Props = {
   beverage: Beverage
-  onCreated: (recipe: Recipe) => void
-  onSkip: () => void
+  /** When given, the form edits this recipe instead of creating one for the beverage. */
+  initial?: Recipe
+  onSaved: (recipe: Recipe) => void
+  onCancel: () => void
+  cancelLabel?: string
 }
 
 type IngredientRow = { key: number; unitCount: string; unitType: string; name: string }
@@ -38,9 +41,17 @@ function toIngredientRequests(rows: IngredientRow[]): IngredientRequest[] | stri
   }))
 }
 
-export function RecipeForm({ beverage, onCreated, onSkip }: Props) {
-  const [ingredients, setIngredients] = useState<IngredientRow[]>(() => [emptyIngredient()])
-  const [instructions, setInstructions] = useState<InstructionRow[]>(() => [emptyInstruction()])
+export function RecipeForm({ beverage, initial, onSaved, onCancel, cancelLabel = 'Cancel' }: Props) {
+  const [ingredients, setIngredients] = useState<IngredientRow[]>(() =>
+    initial?.ingredients.length
+      ? initial.ingredients.map((i) => ({ key: nextKey++, unitCount: String(i.unitCount), unitType: i.unitType, name: i.name }))
+      : [emptyIngredient()],
+  )
+  const [instructions, setInstructions] = useState<InstructionRow[]>(() =>
+    initial?.instructions.length
+      ? initial.instructions.map((i) => ({ key: nextKey++, text: i.instruction }))
+      : [emptyInstruction()],
+  )
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -64,11 +75,12 @@ export function RecipeForm({ beverage, onCreated, onSkip }: Props) {
     setSubmitting(true)
     setError(null)
     try {
-      const recipe = await createRecipe(beverage.id, {
+      const body = {
         ingredients: ingredientRequests,
         instructions: instructions.map((row) => row.text.trim()).filter(Boolean),
-      })
-      onCreated(recipe)
+      }
+      const recipe = initial ? await updateRecipe(initial.id, body) : await createRecipe(beverage.id, body)
+      onSaved(recipe)
     } catch (e) {
       setError((e as Error).message)
       setSubmitting(false)
@@ -77,7 +89,9 @@ export function RecipeForm({ beverage, onCreated, onSkip }: Props) {
 
   return (
     <form className="card" onSubmit={handleSubmit}>
-      <h2>Recipe for {beverage.name}</h2>
+      <h2>
+        {initial ? 'Edit recipe' : 'Recipe'} for {beverage.name}
+      </h2>
 
       <fieldset className="field">
         <legend>Ingredients</legend>
@@ -171,8 +185,8 @@ export function RecipeForm({ beverage, onCreated, onSkip }: Props) {
       {error && <p className="alert error">{error}</p>}
 
       <div className="actions">
-        <button type="button" className="secondary" disabled={submitting} onClick={onSkip}>
-          Skip recipe
+        <button type="button" className="secondary" disabled={submitting} onClick={onCancel}>
+          {cancelLabel}
         </button>
         <button type="submit" disabled={submitting}>
           {submitting ? 'Saving…' : 'Save recipe'}

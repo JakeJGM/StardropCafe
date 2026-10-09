@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * Instructions are plain text; their step numbers come from their order in the list.
  */
-public record CreateRecipeRequestDTO(
+public record RecipeRequestDTO(
         List<IngredientRequestDTO> ingredients,
         List<String> instructions
 ) {

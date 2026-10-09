@@ -1,6 +1,6 @@
 package com.example.stardropcafe.controller;
 
-import com.example.stardropcafe.dto.CreateRecipeRequestDTO;
+import com.example.stardropcafe.dto.RecipeRequestDTO;
 import com.example.stardropcafe.dto.PageResponseDTO;
 import com.example.stardropcafe.dto.RecipeResponseDTO;
 import com.example.stardropcafe.service.RecipeService;
@@ -9,9 +9,11 @@ import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -49,7 +51,18 @@ public class RecipeController {
     @ResponseStatus(HttpStatus.CREATED)
     public RecipeResponseDTO createRecipeForBeverage(
             @PathVariable UUID beverageId,
-            @RequestBody CreateRecipeRequestDTO request) {
+            @RequestBody RecipeRequestDTO request) {
         return recipeService.createForBeverage(beverageId, request);
+    }
+
+    @PutMapping("/{id}")
+    public RecipeResponseDTO updateRecipe(@PathVariable UUID id, @RequestBody RecipeRequestDTO request) {
+        return recipeService.update(id, request);
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteRecipe(@PathVariable UUID id) {
+        recipeService.delete(id);
     }
 }

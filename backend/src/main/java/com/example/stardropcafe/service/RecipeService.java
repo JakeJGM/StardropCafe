@@ -1,7 +1,7 @@
 package com.example.stardropcafe.service;
 
-import com.example.stardropcafe.dto.CreateRecipeRequestDTO;
-import com.example.stardropcafe.dto.CreateRecipeRequestDTO.IngredientRequestDTO;
+import com.example.stardropcafe.dto.RecipeRequestDTO;
+import com.example.stardropcafe.dto.RecipeRequestDTO.IngredientRequestDTO;
 import com.example.stardropcafe.dto.PageResponseDTO;
 import com.example.stardropcafe.dto.RecipeResponseDTO;
 import com.example.stardropcafe.entity.Beverage;
@@ -53,18 +53,81 @@ public class RecipeService {
     }
 
     @Transactional
-    public RecipeResponseDTO createForBeverage(UUID beverageId, CreateRecipeRequestDTO request) {
+    public RecipeResponseDTO createForBeverage(UUID beverageId, RecipeRequestDTO request) {
         Beverage beverage = beverageRepository.findById(beverageId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Beverage not found"));
         if (beverage.getRecipe() != null) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Beverage already has a recipe");
         }
 
+        Recipe recipe = recipeRepository.save(new Recipe());
+        recipe.setBeverage(beverage);
+        beverage.setRecipe(recipe);
+        replaceIngredientsAndInstructions(recipe, request);
+
+        return RecipeResponseDTO.from(recipe);
+    }
+
+    /**
+     * Replaces the recipe's ingredients and instructions wholesale with those in the request.
+     */
+    @Transactional
+    public RecipeResponseDTO update(UUID id, RecipeRequestDTO request) {
+        Recipe recipe = findOrThrow(id);
+        replaceIngredientsAndInstructions(recipe, request);
+        return RecipeResponseDTO.from(recipe);
+    }
+
+    @Transactional
+    public void delete(UUID id) {
+        Recipe recipe = findOrThrow(id);
+        if (recipe.getBeverage() != null) {
+            recipe.getBeverage().setRecipe(null);
+        }
+        delete(recipe);
+    }
+
+    /**
+     * Deletes a recipe and its ingredients and instructions. Callers must first
+     * detach or delete the beverage, which holds the foreign key to the recipe.
+     */
+    @Transactional
+    public void delete(Recipe recipe) {
+        ingredientRepository.deleteAll(recipe.getIngredients());
+        instructionRepository.deleteAll(recipe.getInstructions());
+        recipeRepository.delete(recipe);
+    }
+
+    public Recipe save(Recipe recipe) {
+        return recipeRepository.save(recipe);
+    }
+
+    public List<Recipe> findAll() {
+        return recipeRepository.findAll();
+    }
+
+    public Optional<Recipe> findById(UUID id) {
+        return recipeRepository.findById(id);
+    }
+
+    public void deleteById(UUID id) {
+        recipeRepository.deleteById(id);
+    }
+
+    private Recipe findOrThrow(UUID id) {
+        return recipeRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found"));
+    }
+
+    private void replaceIngredientsAndInstructions(Recipe recipe, RecipeRequestDTO request) {
         List<IngredientRequestDTO> ingredientRequests = request.ingredients() == null ? List.of() : request.ingredients();
         List<String> instructionTexts = request.instructions() == null ? List.of() : request.instructions();
         validateRecipe(ingredientRequests, instructionTexts);
 
-        Recipe recipe = recipeRepository.save(new Recipe());
+        ingredientRepository.deleteAll(recipe.getIngredients());
+        instructionRepository.deleteAll(recipe.getInstructions());
+        recipe.getIngredients().clear();
+        recipe.getInstructions().clear();
 
         List<Ingredient> ingredients = new ArrayList<>();
         for (IngredientRequestDTO ingredientRequest : ingredientRequests) {
@@ -89,26 +152,6 @@ public class RecipeService {
         // what was just saved without reloading the recipe.
         recipe.getIngredients().addAll(ingredientRepository.saveAll(ingredients));
         recipe.getInstructions().addAll(instructionRepository.saveAll(instructions));
-        recipe.setBeverage(beverage);
-        beverage.setRecipe(recipe);
-
-        return RecipeResponseDTO.from(recipe);
-    }
-
-    public Recipe save(Recipe recipe) {
-        return recipeRepository.save(recipe);
-    }
-
-    public List<Recipe> findAll() {
-        return recipeRepository.findAll();
-    }
-
-    public Optional<Recipe> findById(UUID id) {
-        return recipeRepository.findById(id);
-    }
-
-    public void deleteById(UUID id) {
-        recipeRepository.deleteById(id);
     }
 
     private void validateRecipe(List<IngredientRequestDTO> ingredients, List<String> instructions) {

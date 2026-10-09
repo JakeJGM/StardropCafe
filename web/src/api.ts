@@ -20,7 +20,7 @@ export type Beverage = {
   recipeId: string | null
 }
 
-export type CreateBeverageRequest = {
+export type BeverageRequest = {
   name: string
   type: string
   temperature: string
@@ -34,9 +34,19 @@ export type IngredientRequest = {
   name: string
 }
 
-export type CreateRecipeRequest = {
+export type RecipeRequest = {
   ingredients: IngredientRequest[]
   instructions: string[]
+}
+
+export type Page<T> = {
+  content: T[]
+  page: number
+  size: number
+  totalElements: number
+  totalPages: number
+  first: boolean
+  last: boolean
 }
 
 export type Recipe = {
@@ -61,6 +71,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     const body = await response.json().catch(() => null)
     throw new Error(body?.message ?? `Request failed (${response.status})`)
   }
+  if (response.status === 204) {
+    return undefined as T
+  }
   return response.json() as Promise<T>
 }
 
@@ -68,8 +81,26 @@ export const getBeverageOptions = () => request<BeverageOptions>('/beverages/opt
 
 export const getBeverageContents = () => request<BeverageContent[]>('/beverage-contents')
 
-export const createBeverage = (body: CreateBeverageRequest) =>
+export const getBeverages = (page: number, size = 25) =>
+  request<Page<Beverage>>(`/beverages?page=${page}&size=${size}&sort=name,asc`)
+
+export const getBeverage = (id: string) => request<Beverage>(`/beverages/${id}`)
+
+export const createBeverage = (body: BeverageRequest) =>
   request<Beverage>('/beverages', { method: 'POST', body: JSON.stringify(body) })
 
-export const createRecipe = (beverageId: string, body: CreateRecipeRequest) =>
+export const updateBeverage = (id: string, body: BeverageRequest) =>
+  request<Beverage>(`/beverages/${id}`, { method: 'PUT', body: JSON.stringify(body) })
+
+/** Also deletes the beverage's recipe. */
+export const deleteBeverage = (id: string) => request<void>(`/beverages/${id}`, { method: 'DELETE' })
+
+export const getRecipe = (id: string) => request<Recipe>(`/recipes/${id}`)
+
+export const createRecipe = (beverageId: string, body: RecipeRequest) =>
   request<Recipe>(`/recipes/beverage/${beverageId}`, { method: 'POST', body: JSON.stringify(body) })
+
+export const updateRecipe = (id: string, body: RecipeRequest) =>
+  request<Recipe>(`/recipes/${id}`, { method: 'PUT', body: JSON.stringify(body) })
+
+export const deleteRecipe = (id: string) => request<void>(`/recipes/${id}`, { method: 'DELETE' })

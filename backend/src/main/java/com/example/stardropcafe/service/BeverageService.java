@@ -2,15 +2,18 @@ package com.example.stardropcafe.service;
 
 import com.example.stardropcafe.dto.BeverageOptionsResponseDTO;
 import com.example.stardropcafe.dto.BeverageResponseDTO;
-import com.example.stardropcafe.dto.CreateBeverageRequestDTO;
+import com.example.stardropcafe.dto.BeverageRequestDTO;
 import com.example.stardropcafe.dto.PageResponseDTO;
 import com.example.stardropcafe.entity.Beverage;
 import com.example.stardropcafe.entity.BeverageContent;
+import com.example.stardropcafe.entity.Recipe;
 import com.example.stardropcafe.repository.BeverageRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -31,25 +34,39 @@ public class BeverageService {
 
     private final BeverageRepository beverageRepository;
     private final BeverageContentService beverageContentService;
+    private final RecipeService recipeService;
 
     public BeverageOptionsResponseDTO getOptions() {
         return new BeverageOptionsResponseDTO(ALLOWED_TYPES, ALLOWED_TEMPERATURES);
     }
 
     @Transactional
-    public BeverageResponseDTO create(CreateBeverageRequestDTO request) {
-        if (request.name() == null || request.name().isBlank()) {
-            throw new IllegalArgumentException("Beverage name is required");
-        }
-        validateBeverage(request.type(), request.temperature());
-
+    public BeverageResponseDTO create(BeverageRequestDTO request) {
         Beverage beverage = new Beverage();
-        beverage.setName(request.name().trim());
-        beverage.setType(request.type());
-        beverage.setTemperature(request.temperature());
-        beverage.setBeverageContents(resolveBeverageContents(request));
-
+        applyRequest(beverage, request);
         return BeverageResponseDTO.from(beverageRepository.save(beverage));
+    }
+
+    @Transactional
+    public BeverageResponseDTO update(UUID id, BeverageRequestDTO request) {
+        Beverage beverage = findOrThrow(id);
+        applyRequest(beverage, request);
+        return BeverageResponseDTO.from(beverage);
+    }
+
+    /**
+     * Deletes the beverage along with its recipe. Its contents are kept, since
+     * other beverages may share them.
+     */
+    @Transactional
+    public void delete(UUID id) {
+        Beverage beverage = findOrThrow(id);
+        Recipe recipe = beverage.getRecipe();
+        // The beverage holds the foreign key to its recipe, so it must go first.
+        beverageRepository.delete(beverage);
+        if (recipe != null) {
+            recipeService.delete(recipe);
+        }
     }
 
     public PageResponseDTO<BeverageResponseDTO> findAllBeverageResponses(Pageable pageable) {
@@ -79,7 +96,24 @@ public class BeverageService {
         beverageRepository.deleteById(id);
     }
 
-    private Set<BeverageContent> resolveBeverageContents(CreateBeverageRequestDTO request) {
+    private Beverage findOrThrow(UUID id) {
+        return beverageRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Beverage not found"));
+    }
+
+    private void applyRequest(Beverage beverage, BeverageRequestDTO request) {
+        if (request.name() == null || request.name().isBlank()) {
+            throw new IllegalArgumentException("Beverage name is required");
+        }
+        validateBeverage(request.type(), request.temperature());
+
+        beverage.setName(request.name().trim());
+        beverage.setType(request.type());
+        beverage.setTemperature(request.temperature());
+        beverage.setBeverageContents(resolveBeverageContents(request));
+    }
+
+    private Set<BeverageContent> resolveBeverageContents(BeverageRequestDTO request) {
         Set<UUID> ids = request.beverageContentIds() == null
                 ? Set.of()
                 : new HashSet<>(request.beverageContentIds());

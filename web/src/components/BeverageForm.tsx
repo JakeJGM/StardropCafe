@@ -3,6 +3,7 @@ import {
   createBeverage,
   getBeverageContents,
   getBeverageOptions,
+  updateBeverage,
   type Beverage,
   type BeverageContent,
   type BeverageOptions,
@@ -10,20 +11,25 @@ import {
 import { ContentPicker, type SelectedContent } from './ContentPicker'
 
 type Props = {
-  onCreated: (beverage: Beverage) => void
+  /** When given, the form edits this beverage instead of creating a new one. */
+  initial?: Beverage
+  onSaved: (beverage: Beverage) => void
+  onCancel?: () => void
 }
 
 const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1)
 
-export function BeverageForm({ onCreated }: Props) {
+export function BeverageForm({ initial, onSaved, onCancel }: Props) {
   const [options, setOptions] = useState<BeverageOptions | null>(null)
   const [availableContents, setAvailableContents] = useState<BeverageContent[]>([])
   const [loadError, setLoadError] = useState<string | null>(null)
 
-  const [name, setName] = useState('')
-  const [type, setType] = useState('')
-  const [temperature, setTemperature] = useState('')
-  const [contents, setContents] = useState<SelectedContent[]>([])
+  const [name, setName] = useState(initial?.name ?? '')
+  const [type, setType] = useState(initial?.type ?? '')
+  const [temperature, setTemperature] = useState(initial?.temperature ?? '')
+  const [contents, setContents] = useState<SelectedContent[]>(() =>
+    (initial?.beverageContents ?? []).map(({ id, name }) => ({ id, name })),
+  )
 
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -47,14 +53,15 @@ export function BeverageForm({ onCreated }: Props) {
     setSubmitting(true)
     setError(null)
     try {
-      const beverage = await createBeverage({
+      const body = {
         name: name.trim(),
         type,
         temperature,
         beverageContentIds: contents.flatMap((c) => (c.id === null ? [] : [c.id])),
         newBeverageContentNames: contents.flatMap((c) => (c.id === null ? [c.name] : [])),
-      })
-      onCreated(beverage)
+      }
+      const beverage = initial ? await updateBeverage(initial.id, body) : await createBeverage(body)
+      onSaved(beverage)
     } catch (e) {
       setError((e as Error).message)
       setSubmitting(false)
@@ -70,7 +77,7 @@ export function BeverageForm({ onCreated }: Props) {
 
   return (
     <form className="card" onSubmit={handleSubmit}>
-      <h2>New beverage</h2>
+      <h2>{initial ? 'Edit beverage' : 'New beverage'}</h2>
 
       <label className="field">
         <span>Name</span>
@@ -125,8 +132,13 @@ export function BeverageForm({ onCreated }: Props) {
       {error && <p className="alert error">{error}</p>}
 
       <div className="actions">
+        {onCancel && (
+          <button type="button" className="secondary" disabled={submitting} onClick={onCancel}>
+            Cancel
+          </button>
+        )}
         <button type="submit" disabled={submitting}>
-          {submitting ? 'Creating…' : 'Create beverage'}
+          {submitting ? 'Saving…' : initial ? 'Save changes' : 'Create beverage'}
         </button>
       </div>
     </form>
