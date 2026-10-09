@@ -176,7 +176,26 @@
   border-bottom: 1px solid var(--border);
 }
 
+.beverage-list-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.beverage-list-row button {
+  flex: none;
+  margin-right: 8px;
+  padding: 5px 12px;
+  font-size: 0.85rem;
+}
+
+.beverage-list li .confirm {
+  margin: 0 8px 12px;
+}
+
 .beverage-list a {
+  flex: 1 1 auto;
+  min-width: 0;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -496,6 +515,41 @@ button.danger-outline:hover:not(:disabled) {
   font-weight: 600;
   line-height: 28px;
   text-align: center;
+}
+
+.instruction-row.dragging {
+  opacity: 0.5;
+}
+
+.drag-handle {
+  flex: none;
+  width: 20px;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 1.1rem;
+  line-height: 28px;
+  text-align: center;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.drag-handle:hover {
+  color: var(--text);
+}
+
+.drag-handle:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+  border-radius: 4px;
+}
+
+.drag-handle[aria-disabled='true'] {
+  visibility: hidden;
+}
+
+.instruction-row.dragging .drag-handle {
+  cursor: grabbing;
 }
 
 /* Alerts */

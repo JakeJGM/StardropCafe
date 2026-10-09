@@ -27,8 +27,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class BeverageService {
 
-    private static final List<String> ALLOWED_TYPES = List.of("Coffee", "Tea", "Spirit", "Matcha", "Dirty Soda");
-    private static final List<String> ALLOWED_TEMPERATURES = List.of("hot", "iced", "cold");
+    private static final List<String> ALLOWED_TYPES = List.of("Coffee", "Tea", "Spirit", "Matcha");
+    private static final List<String> ALLOWED_TEMPERATURES = List.of("Hot", "Room-temp", "Iced", "Cold", "Frozen");
     private static final int MIN_CONTENTS = 1;
     private static final int MAX_CONTENTS = 3;
 

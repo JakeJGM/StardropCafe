@@ -49,7 +49,7 @@ export function ContentPicker({ available, selected, onChange }: Props) {
   return (
     <fieldset className="field">
       <legend>
-        Contents <span className="muted">— pick 1 to {MAX_CONTENTS} that best describe the drink</span>
+        Contents <span className="muted">- pick 1 to {MAX_CONTENTS} that best describe the drink</span>
       </legend>
 
       <div className="content-inputs">
