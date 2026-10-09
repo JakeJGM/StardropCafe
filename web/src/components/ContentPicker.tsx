@@ -49,27 +49,8 @@ export function ContentPicker({ available, selected, onChange }: Props) {
   return (
     <fieldset className="field">
       <legend>
-        Contents <span className="muted">— pick 1 to {MAX_CONTENTS} that best describe the drink</span>
+        Contents <span className="muted">- pick 1 to {MAX_CONTENTS} that best describe the drink</span>
       </legend>
-
-      {selected.length > 0 && (
-        <ul className="chips">
-          {selected.map((content, index) => (
-            <li key={content.id ?? `new-${content.name}`} className="chip">
-              {content.name}
-              {content.id === null && <span className="chip-tag">new</span>}
-              <button
-                type="button"
-                className="chip-remove"
-                aria-label={`Remove ${content.name}`}
-                onClick={() => remove(index)}
-              >
-                ×
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
 
       <div className="content-inputs">
         <select
@@ -119,6 +100,23 @@ export function ContentPicker({ available, selected, onChange }: Props) {
       <p className="help">
         {hint ?? (isFull ? `Maximum of ${MAX_CONTENTS} reached.` : `${selected.length} of ${MAX_CONTENTS} selected`)}
       </p>
+
+      <ul className="chips">
+        {selected.map((content, index) => (
+          <li key={content.id ?? `new-${content.name}`} className="chip">
+            {content.name}
+            {content.id === null && <span className="chip-tag">new</span>}
+            <button
+              type="button"
+              className="chip-remove"
+              aria-label={`Remove ${content.name}`}
+              onClick={() => remove(index)}
+            >
+              ×
+            </button>
+          </li>
+        ))}
+      </ul>
     </fieldset>
   )
 }

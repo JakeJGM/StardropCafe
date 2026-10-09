@@ -10,6 +10,7 @@ import com.example.stardropcafe.repository.BeverageRepository;
 import com.example.stardropcafe.repository.IngredientRepository;
 import com.example.stardropcafe.repository.InstructionRepository;
 import com.example.stardropcafe.repository.RecipeRepository;
+import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,9 +27,12 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.hamcrest.Matchers.hasSize;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -449,6 +453,128 @@ class StardropCafeApplicationTests {
                                 """))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Beverage not found"));
+    }
+
+    @Test
+    void updatesBeverage() throws Exception {
+        BeverageContent milk = beverageContentRepository.save(beverageContent("Milk"));
+        Beverage beverage = beverage("Stardrop Latte");
+        beverage.setBeverageContents(Set.of(milk));
+        beverage = beverageRepository.save(beverage);
+
+        String request = """
+                {
+                  "name": "Iced Stardrop Latte",
+                  "type": "Coffee",
+                  "temperature": "iced",
+                  "newBeverageContentNames": ["Vanilla"]
+                }
+                """;
+
+        mockMvc.perform(put("/beverages/{id}", beverage.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Iced Stardrop Latte"))
+                .andExpect(jsonPath("$.temperature").value("iced"))
+                .andExpect(jsonPath("$.beverageContents", hasSize(1)))
+                .andExpect(jsonPath("$.beverageContents[0].name").value("Vanilla"));
+    }
+
+    @Test
+    void returnsNotFoundWhenUpdatingMissingBeverage() throws Exception {
+        mockMvc.perform(put("/beverages/{id}", UUID.randomUUID())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name": "X", "type": "Coffee", "temperature": "hot", "newBeverageContentNames": ["Y"]}
+                                """))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void deletesBeverageAndItsRecipe() throws Exception {
+        BeverageContent milk = beverageContentRepository.save(beverageContent("Milk"));
+        Beverage beverage = beverage("Stardrop Latte");
+        beverage.setBeverageContents(Set.of(milk));
+        beverage = beverageRepository.save(beverage);
+        createRecipe(beverage.getId());
+
+        mockMvc.perform(delete("/beverages/{id}", beverage.getId()))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(get("/beverages/{id}", beverage.getId()))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(get("/recipes"))
+                .andExpect(jsonPath("$.content", hasSize(0)));
+        // Contents are shared vocabulary, so they outlive the beverage.
+        mockMvc.perform(get("/beverage-contents"))
+                .andExpect(jsonPath("$", hasSize(1)));
+        assertEquals(0, ingredientRepository.count());
+        assertEquals(0, instructionRepository.count());
+    }
+
+    @Test
+    void updatesRecipe() throws Exception {
+        Beverage beverage = beverageRepository.save(beverage("Stardrop Latte"));
+        String recipeId = createRecipe(beverage.getId());
+
+        String request = """
+                {
+                  "ingredients": [{"unitCount": 3, "unitType": "shot", "name": "Espresso"}],
+                  "instructions": ["Pull three shots."]
+                }
+                """;
+
+        mockMvc.perform(put("/recipes/{id}", recipeId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.ingredients", hasSize(1)))
+                .andExpect(jsonPath("$.ingredients[0].unitCount").value(3))
+                .andExpect(jsonPath("$.instructions", hasSize(1)))
+                .andExpect(jsonPath("$.instructions[0].step").value(1));
+
+        mockMvc.perform(get("/recipes/{id}", recipeId))
+                .andExpect(jsonPath("$.ingredients", hasSize(1)))
+                .andExpect(jsonPath("$.instructions", hasSize(1)));
+        assertEquals(1, ingredientRepository.count());
+    }
+
+    @Test
+    void deletesRecipeButKeepsBeverage() throws Exception {
+        Beverage beverage = beverageRepository.save(beverage("Stardrop Latte"));
+        String recipeId = createRecipe(beverage.getId());
+
+        mockMvc.perform(delete("/recipes/{id}", recipeId))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(get("/beverages/{id}", beverage.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.recipeId").doesNotExist());
+        mockMvc.perform(get("/recipes/{id}", recipeId))
+                .andExpect(status().isNotFound());
+        assertEquals(0, ingredientRepository.count());
+
+        // With the old recipe gone, the beverage can be given a new one.
+        createRecipe(beverage.getId());
+    }
+
+    private String createRecipe(UUID beverageId) throws Exception {
+        String request = """
+                {
+                  "ingredients": [
+                    {"unitCount": 2, "unitType": "shot", "name": "Espresso"},
+                    {"unitCount": 1, "unitType": "cup", "name": "Milk"}
+                  ],
+                  "instructions": ["Pull shots.", "Add milk."]
+                }
+                """;
+        String response = mockMvc.perform(post("/recipes/beverage/{beverageId}", beverageId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        return JsonPath.read(response, "$.id");
     }
 
     private Beverage beverage(String name) {

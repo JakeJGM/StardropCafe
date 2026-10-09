@@ -8,7 +8,7 @@ import java.util.UUID;
  * ({@code beverageContentIds}) and/or new ones created by name
  * ({@code newBeverageContentNames}).
  */
-public record CreateBeverageRequestDTO(
+public record BeverageRequestDTO(
         String name,
         String type,
         String temperature,
