@@ -6,7 +6,7 @@ import { Text } from '@/components/text';
 import { BeverageTemperature, BeverageType } from '@/types/sc-entities';
 
 export type BeverageCardProps = {
-  uuid: string;
+  recipeId: string | null;
   name: string;
   beverageType: BeverageType;
   temperature: BeverageTemperature;
@@ -33,7 +33,7 @@ const temperatureLabels: Record<BeverageTemperature, string> = {
   cold: 'Cold',
 };
 
-export default function BeverageCard({ uuid, name, beverageType, temperature, ingredients }: BeverageCardProps) {
+export default function BeverageCard({ recipeId, name, beverageType, temperature, ingredients }: BeverageCardProps) {
   const [ingredientsRowWidth, setIngredientsRowWidth] = useState(0);
   const [ingredientWidths, setIngredientWidths] = useState<Record<number, number>>({});
 
@@ -60,7 +60,9 @@ export default function BeverageCard({ uuid, name, beverageType, temperature, in
   return (
     <Pressable
       accessibilityRole="button"
-      onPress={() => router.push({ pathname: '/beverage/[uuid]', params: { uuid } })}
+      // Beverages without a recipe have nothing to show on the recipe page.
+      disabled={recipeId === null}
+      onPress={() => recipeId && router.push({ pathname: '/recipe/[uuid]', params: { uuid: recipeId } })}
       style={({ pressed }) => [styles.cardContainer, pressed && styles.cardPressed]}
     >
       <View style={styles.outerBorder}>
