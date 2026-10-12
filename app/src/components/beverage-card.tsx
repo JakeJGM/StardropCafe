@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Image, ImageSourcePropType, Pressable, StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/text';
+import { NO_RECIPE_ID } from '@/constants/routes';
 import { BeverageTemperature, BeverageType } from '@/types/sc-entities';
 
 export type BeverageCardProps = {
@@ -60,9 +61,7 @@ export default function BeverageCard({ recipeId, name, beverageType, temperature
   return (
     <Pressable
       accessibilityRole="button"
-      // Beverages without a recipe have nothing to show on the recipe page.
-      disabled={recipeId === null}
-      onPress={() => recipeId && router.push({ pathname: '/recipe/[uuid]', params: { uuid: recipeId } })}
+      onPress={() => router.push({ pathname: '/recipe/[uuid]', params: { uuid: recipeId ?? NO_RECIPE_ID } })}
       style={({ pressed }) => [styles.cardContainer, pressed && styles.cardPressed]}
     >
       <View style={styles.outerBorder}>

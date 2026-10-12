@@ -1,12 +1,15 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Text } from '@/components/text';
+import { NO_RECIPE_ID } from '@/constants/routes';
 import { useTheme } from '@/hooks/use-theme';
 
 export default function BeverageRecipeScreen() {
   const theme = useTheme();
+  const { uuid } = useLocalSearchParams<{ uuid: string }>();
+  const hasRecipe = uuid !== NO_RECIPE_ID;
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -24,27 +27,33 @@ export default function BeverageRecipeScreen() {
           <View style={styles.innerBorder}>
             <View style={styles.innerPageBorder}>
               <View style={styles.note}>
-                <View style={styles.noteText}>
-                  <View style={styles.noteHeader}>
-                    <Text style={styles.recipeTitle}>Honey Oat Latte</Text>
-                  </View>
-                  <View style={styles.ingredientListContainer}>
-                    <Text style={styles.sectionTitle}>Ingredients:</Text>
-                    <Text style={styles.recipeText}>• 1 shot of espresso</Text>
-                    <Text style={styles.recipeText}>• 1 cup of milk</Text>
-                    <Text style={styles.recipeText}>• 1 tablespoon of honey</Text>
-                    <Text style={styles.recipeText}>• 1 teaspoon of oat flour</Text>
-                  </View>
-                  <View style={styles.instructionsContainer}>
-                    <View>
-                      <Text style={styles.sectionTitle}>Instructions:</Text>
-                      <Text style={styles.recipeText}>1. Brew 1 shot of espresso.</Text>
-                      <Text style={styles.recipeText}>2. Heat 1 cup of milk.</Text>
-                      <Text style={styles.recipeText}>3. Mix 1 tablespoon of honey with 1 teaspoon of oat flour.</Text>
-                      <Text style={styles.recipeText}>4. Combine all ingredients and serve.</Text>
+                {hasRecipe ? (
+                  <View style={styles.noteText}>
+                    <View style={styles.noteHeader}>
+                      <Text style={styles.recipeTitle}>Honey Oat Latte</Text>
+                    </View>
+                    <View style={styles.ingredientListContainer}>
+                      <Text style={styles.sectionTitle}>Ingredients:</Text>
+                      <Text style={styles.recipeText}>• 1 shot of espresso</Text>
+                      <Text style={styles.recipeText}>• 1 cup of milk</Text>
+                      <Text style={styles.recipeText}>• 1 tablespoon of honey</Text>
+                      <Text style={styles.recipeText}>• 1 teaspoon of oat flour</Text>
+                    </View>
+                    <View style={styles.instructionsContainer}>
+                      <View>
+                        <Text style={styles.sectionTitle}>Instructions:</Text>
+                        <Text style={styles.recipeText}>1. Brew 1 shot of espresso.</Text>
+                        <Text style={styles.recipeText}>2. Heat 1 cup of milk.</Text>
+                        <Text style={styles.recipeText}>3. Mix 1 tablespoon of honey with 1 teaspoon of oat flour.</Text>
+                        <Text style={styles.recipeText}>4. Combine all ingredients and serve.</Text>
+                      </View>
                     </View>
                   </View>
-                </View>
+                ) : (
+                  <View style={styles.emptyNote}>
+                    <Text style={styles.emptyNoteText}>No recipe created for this beverage yet!</Text>
+                  </View>
+                )}
               </View>
             </View>
           </View>
@@ -122,5 +131,17 @@ const styles = StyleSheet.create({
   recipeText: {
     fontSize: 18,
     lineHeight: 27,
+  },
+  emptyNote: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  emptyNoteText: {
+    fontFamily: 'StardewFontBold',
+    fontSize: 28,
+    lineHeight: 36,
+    textAlign: 'center',
   },
 });
