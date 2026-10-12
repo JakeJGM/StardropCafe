@@ -38,6 +38,7 @@ export interface Instruction {
 export interface Recipe {
   id: string,
   beverageId: string | null,
+  beverageName: string | null,
   ingredients: Ingredient[],
   instructions: Instruction[]
 }

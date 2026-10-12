@@ -52,6 +52,7 @@ export type Page<T> = {
 export type Recipe = {
   id: string
   beverageId: string
+  beverageName: string
   ingredients: (IngredientRequest & { id: string })[]
   instructions: { id: string; step: number; instruction: string }[]
 }

@@ -12,12 +12,14 @@ import java.util.UUID;
 public record RecipeResponseDTO(
         UUID id,
         UUID beverageId,
+        String beverageName,
         List<IngredientResponseDTO> ingredients,
         List<InstructionResponseDTO> instructions
 ) {
 
     public static RecipeResponseDTO from(Recipe recipe) {
         UUID beverageId = recipe.getBeverage() == null ? null : recipe.getBeverage().getId();
+        String beverageName = recipe.getBeverage() == null ? null : recipe.getBeverage().getName();
         List<IngredientResponseDTO> ingredients = recipe.getIngredients()
                 .stream()
                 .map(IngredientResponseDTO::from)
@@ -28,7 +30,7 @@ public record RecipeResponseDTO(
                 .sorted(Comparator.comparing(InstructionResponseDTO::step))
                 .toList();
 
-        return new RecipeResponseDTO(recipe.getId(), beverageId, ingredients, instructions);
+        return new RecipeResponseDTO(recipe.getId(), beverageId, beverageName, ingredients, instructions);
     }
 
     public record IngredientResponseDTO(
