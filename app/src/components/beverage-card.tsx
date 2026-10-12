@@ -3,10 +3,11 @@ import { useState } from 'react';
 import { Image, ImageSourcePropType, Pressable, StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/text';
+import { NO_RECIPE_ID } from '@/constants/routes';
 import { BeverageTemperature, BeverageType } from '@/types/sc-entities';
 
 export type BeverageCardProps = {
-  uuid: string;
+  recipeId: string | null;
   name: string;
   beverageType: BeverageType;
   temperature: BeverageTemperature;
@@ -33,7 +34,7 @@ const temperatureLabels: Record<BeverageTemperature, string> = {
   cold: 'Cold',
 };
 
-export default function BeverageCard({ uuid, name, beverageType, temperature, ingredients }: BeverageCardProps) {
+export default function BeverageCard({ recipeId, name, beverageType, temperature, ingredients }: BeverageCardProps) {
   const [ingredientsRowWidth, setIngredientsRowWidth] = useState(0);
   const [ingredientWidths, setIngredientWidths] = useState<Record<number, number>>({});
 
@@ -60,7 +61,7 @@ export default function BeverageCard({ uuid, name, beverageType, temperature, in
   return (
     <Pressable
       accessibilityRole="button"
-      onPress={() => router.push({ pathname: '/beverage/[uuid]', params: { uuid } })}
+      onPress={() => router.push({ pathname: '/recipe/[uuid]', params: { uuid: recipeId ?? NO_RECIPE_ID } })}
       style={({ pressed }) => [styles.cardContainer, pressed && styles.cardPressed]}
     >
       <View style={styles.outerBorder}>

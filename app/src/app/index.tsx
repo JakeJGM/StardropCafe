@@ -92,7 +92,7 @@ export default function HomeScreen() {
         }
         renderItem={({ item }) => (
           <BeverageCard
-            uuid={item.id}
+            recipeId={item.recipeId}
             name={item.name}
             beverageType={item.type}
             temperature={item.temperature}
