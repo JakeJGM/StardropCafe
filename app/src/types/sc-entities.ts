@@ -16,6 +16,19 @@ export interface BeverageContent {
   name: string
 }
 
+export interface BeverageOptions {
+  types: string[],
+  temperatures: string[]
+}
+
+// Within a field, a beverage matches any listed value; for contents it must
+// contain every listed id. Empty arrays leave that field unfiltered.
+export interface BeverageFilters {
+  types: string[],
+  temperatures: string[],
+  contentIds: string[]
+}
+
 export interface CreateBeverageRequest {
   name: string,
   type: BeverageType,

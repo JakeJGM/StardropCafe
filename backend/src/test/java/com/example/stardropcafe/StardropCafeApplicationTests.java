@@ -172,6 +172,47 @@ class StardropCafeApplicationTests {
     }
 
     @Test
+    void filtersBeveragesByTypeTemperatureAndContents() throws Exception {
+        BeverageContent milk = beverageContentRepository.save(beverageContent("Milk"));
+        BeverageContent espresso = beverageContentRepository.save(beverageContent("Espresso"));
+        BeverageContent matcha = beverageContentRepository.save(beverageContent("Matcha Powder"));
+
+        Beverage latte = beverage("Latte");
+        latte.setBeverageContents(Set.of(milk, espresso));
+        beverageRepository.save(latte);
+
+        Beverage espressoShot = beverage("Espresso Shot");
+        espressoShot.setBeverageContents(Set.of(espresso));
+        beverageRepository.save(espressoShot);
+
+        Beverage matchaLatte = beverage("Matcha Latte");
+        matchaLatte.setType("Matcha");
+        matchaLatte.setTemperature("iced");
+        matchaLatte.setBeverageContents(Set.of(milk, matcha));
+        beverageRepository.save(matchaLatte);
+
+        // Values within one field are alternatives, and casing is ignored.
+        mockMvc.perform(get("/beverages").param("type", "coffee", "Matcha"))
+                .andExpect(jsonPath("$.totalElements").value(3));
+        mockMvc.perform(get("/beverages").param("temperature", "Iced"))
+                .andExpect(jsonPath("$.content[*].name", containsInAnyOrder("Matcha Latte")));
+
+        // Every listed content must be present.
+        mockMvc.perform(get("/beverages").param("contentId", milk.getId().toString()))
+                .andExpect(jsonPath("$.content[*].name", containsInAnyOrder("Latte", "Matcha Latte")));
+        mockMvc.perform(get("/beverages")
+                        .param("contentId", milk.getId().toString(), espresso.getId().toString()))
+                .andExpect(jsonPath("$.content[*].name", containsInAnyOrder("Latte")))
+                .andExpect(jsonPath("$.totalElements").value(1));
+
+        // Different fields narrow each other.
+        mockMvc.perform(get("/beverages")
+                        .param("type", "Coffee")
+                        .param("contentId", milk.getId().toString()))
+                .andExpect(jsonPath("$.content[*].name", containsInAnyOrder("Latte")));
+    }
+
+    @Test
     void retrievesBeverageById() throws Exception {
         BeverageContent chocolateSyrup = new BeverageContent();
         chocolateSyrup.setName("Chocolate syrup");
