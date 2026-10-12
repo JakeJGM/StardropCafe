@@ -1,21 +1,28 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query';
+import { useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getBeverages } from '@/api/api';
 import BeverageCard from '@/components/beverage-card';
+import BeverageFilters from '@/components/beverage-filters';
 import { Text } from '@/components/text';
 import { useTheme } from '@/hooks/use-theme';
 import type { PageParams } from '@/types/api-wrappers';
+import type { Beverage, BeverageFilters as Filters } from '@/types/sc-entities';
 
 const PAGE_SIZE = 20;
 
 // Sorted server-side so page boundaries stay stable as beverages are added.
 const firstPageParams: PageParams = { page: 0, size: PAGE_SIZE, sort: 'name,asc' };
 
+const noFilters: Filters = { types: [], temperatures: [], contentIds: [] };
+
 export default function HomeScreen() {
   const theme = useTheme();
+  const listRef = useRef<FlatList<Beverage>>(null);
+  const [filters, setFilters] = useState<Filters>(noFilters);
+  const hasFilters = Object.values(filters).some((values) => values.length > 0);
 
   const {
     data,
@@ -26,12 +33,16 @@ export default function HomeScreen() {
     isPending,
     refetch,
   } = useInfiniteQuery({
-    // One cache entry holds every page loaded so far, so pages already fetched
-    // are never re-requested while the query is fresh (staleTime is 5m).
-    queryKey: ['beverages', firstPageParams],
-    queryFn: ({ pageParam }) => getBeverages(pageParam),
+    // One cache entry per filter combination holds every page loaded so far, so
+    // pages already fetched are never re-requested while the query is fresh
+    // (staleTime is 5m).
+    queryKey: ['beverages', firstPageParams, filters],
+    queryFn: ({ pageParam }) => getBeverages(pageParam, filters),
     initialPageParam: firstPageParams,
     getNextPageParam: (lastPage) => lastPage.nextPageParams ?? undefined,
+    // Keep showing the current results while a new filter loads, instead of
+    // swapping the list for a spinner on every tap.
+    placeholderData: keepPreviousData,
   });
 
   const beverages = useMemo(
@@ -45,6 +56,11 @@ export default function HomeScreen() {
     }
   };
 
+  const changeFilters = (nextFilters: Filters) => {
+    setFilters(nextFilters);
+    listRef.current?.scrollToOffset({ offset: 0, animated: false });
+  };
+
   const header = (
     <View style={styles.header}>
       <Text style={styles.eyebrow}>Stardrop Cafe</Text>
@@ -52,38 +68,41 @@ export default function HomeScreen() {
     </View>
   );
 
-  if (isPending) {
-    return (
-      <SafeAreaView style={[styles.safeArea, styles.centered, { backgroundColor: theme.background }]} edges={['top']}>
-        <ActivityIndicator color={theme.text} size="large" />
-      </SafeAreaView>
-    );
-  }
+  const renderBody = () => {
+    if (isPending) {
+      return (
+        <View style={styles.centered}>
+          <ActivityIndicator color={theme.text} size="large" />
+        </View>
+      );
+    }
 
-  if (error) {
-    return (
-      <SafeAreaView style={[styles.safeArea, styles.centered, { backgroundColor: theme.background }]} edges={['top']}>
-        <Text style={[styles.message, { color: theme.text }]}>Could not load the menu.</Text>
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => refetch()}
-          style={({ pressed }) => [styles.retryButton, pressed && styles.retryButtonPressed]}
-        >
-          <Text style={[styles.retryText, { color: theme.text }]}>Try again</Text>
-        </Pressable>
-      </SafeAreaView>
-    );
-  }
+    if (error) {
+      return (
+        <View style={styles.centered}>
+          <Text style={[styles.message, { color: theme.text }]}>Could not load the menu.</Text>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => refetch()}
+            style={({ pressed }) => [styles.retryButton, pressed && styles.retryButtonPressed]}
+          >
+            <Text style={[styles.retryText, { color: theme.text }]}>Try again</Text>
+          </Pressable>
+        </View>
+      );
+    }
 
-  return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]} edges={['top']}>
+    return (
       <FlatList
+        ref={listRef}
         contentContainerStyle={styles.content}
         data={beverages}
         keyExtractor={(beverage) => beverage.id}
-        ListHeaderComponent={header}
+        //ListHeaderComponent={header}
         ListEmptyComponent={
-          <Text style={[styles.message, { color: theme.text }]}>No beverages on the menu yet.</Text>
+          <Text style={[styles.message, { color: theme.text }]}>
+            {hasFilters ? 'No beverages match these filters.' : 'No beverages on the menu yet.'}
+          </Text>
         }
         ListFooterComponent={
           isFetchingNextPage
@@ -105,6 +124,14 @@ export default function HomeScreen() {
         onEndReachedThreshold={0.5}
         showsVerticalScrollIndicator={false}
       />
+    );
+  };
+
+  return (
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]} edges={['top']}>
+      <BeverageFilters filters={filters} onChange={changeFilters}>
+        {renderBody()}
+      </BeverageFilters>
     </SafeAreaView>
   );
 }
@@ -114,6 +141,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   centered: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },

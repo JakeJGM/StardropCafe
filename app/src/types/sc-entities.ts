@@ -7,13 +7,26 @@ export interface Beverage {
   recipeId: string | null
 }
 
-export type BeverageType = 'Coffee' | 'Tea' | 'Spirit' | 'Matcha' | 'Dirty Soda';
+export type BeverageType = 'Coffee' | 'Tea' | 'Spirit';
 
-export type BeverageTemperature = 'hot' | 'iced' | 'cold';
+export type BeverageTemperature = 'Hot' | 'Room-temp' | 'Iced' | 'Cold' | 'Frozen';
 
 export interface BeverageContent {
   id: string,
   name: string
+}
+
+export interface BeverageOptions {
+  types: string[],
+  temperatures: string[]
+}
+
+// Within a field, a beverage matches any listed value; for contents it must
+// contain every listed id. Empty arrays leave that field unfiltered.
+export interface BeverageFilters {
+  types: string[],
+  temperatures: string[],
+  contentIds: string[]
 }
 
 export interface CreateBeverageRequest {

@@ -42,7 +42,6 @@ public class TestDataLoader implements ApplicationRunner {
         BeverageContent espresso = beverageContentRepository.save(beverageContent("Espresso"));
         BeverageContent matcha = beverageContentRepository.save(beverageContent("Matcha Powder"));
         BeverageContent citrus = beverageContentRepository.save(beverageContent("Citrus"));
-        BeverageContent soda = beverageContentRepository.save(beverageContent("Soda"));
         BeverageContent spirit = beverageContentRepository.save(beverageContent("Spirit Base"));
 
         Recipe latteRecipe = recipeRepository.save(new Recipe());
@@ -69,24 +68,13 @@ public class TestDataLoader implements ApplicationRunner {
                 instruction(3, "Serve over ice.", matchaRecipe)
         ));
 
-        Recipe dirtySodaRecipe = recipeRepository.save(new Recipe());
-        ingredientRepository.saveAll(List.of(
-                ingredient("Cola", "ounce", "8", dirtySodaRecipe),
-                ingredient("Coconut cream", "ounce", "1", dirtySodaRecipe),
-                ingredient("Lime juice", "ounce", "0.5", dirtySodaRecipe)
-        ));
-        instructionRepository.saveAll(List.of(
-                instruction(1, "Fill glass with ice.", dirtySodaRecipe),
-                instruction(2, "Pour cola and lime juice over ice.", dirtySodaRecipe),
-                instruction(3, "Top with coconut cream.", dirtySodaRecipe)
-        ));
-
+        // Saved through the repository, which skips BeverageService validation, so
+        // these must stay within its allowed types, temperatures, and 1-3 contents.
         beverageRepository.saveAll(List.of(
-                beverage("Stardrop Latte", "Coffee", "hot", latteRecipe, Set.of(coffee, espresso, milk)),
-                beverage("Moonlight Matcha", "Matcha", "iced", matchaRecipe, Set.of(matcha, milk)),
-                beverage("Cinder Spirit", "Spirit", "cold", null, Set.of(spirit, citrus)),
-                beverage("Saloon Espresso", "Coffee", "hot", null, Set.of(coffee, espresso)),
-                beverage("Joja Dirty Soda", "Dirty Soda", "cold", dirtySodaRecipe, Set.of(soda, citrus))
+                beverage("Stardrop Latte", "Coffee", "Hot", latteRecipe, Set.of(coffee, espresso, milk)),
+                beverage("Moonlight Matcha", "Tea", "Iced", matchaRecipe, Set.of(matcha, milk)),
+                beverage("Cinder Spirit", "Spirit", "Cold", null, Set.of(spirit, citrus)),
+                beverage("Saloon Espresso", "Coffee", "Hot", null, Set.of(coffee, espresso))
         ));
     }
 

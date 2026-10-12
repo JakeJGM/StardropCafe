@@ -1,4 +1,5 @@
 import { skipToken, useQuery } from '@tanstack/react-query';
+import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -6,10 +7,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { getRecipeById } from '@/api/api';
 import { Text } from '@/components/text';
 import { NO_RECIPE_ID } from '@/constants/routes';
-import { useTheme } from '@/hooks/use-theme';
 
 export default function BeverageRecipeScreen() {
-  const theme = useTheme();
   const { uuid } = useLocalSearchParams<{ uuid: string }>();
   const hasRecipe = uuid !== NO_RECIPE_ID;
 
@@ -59,7 +58,7 @@ export default function BeverageRecipeScreen() {
           <Text style={styles.sectionTitle}>Ingredients:</Text>
           {recipe.ingredients.map((ingredient) => (
             <Text key={ingredient.id} style={styles.recipeText}>
-              {`• ${ingredient.unitCount} ${ingredient.unitType} of ${ingredient.name}`}
+              {`* ${ingredient.unitCount} ${ingredient.unitType} of ${ingredient.name}`}
             </Text>
           ))}
         </View>
@@ -84,7 +83,11 @@ export default function BeverageRecipeScreen() {
         onPress={() => router.back()}
         style={({ pressed }) => [styles.backButton, pressed && styles.backButtonPressed]}
       >
-        <Text style={[styles.backText, { color: theme.text }]}>{'< Back'}</Text>
+        <Image
+          source={require('../../../assets/images/recipe_page/back-button.svg')}
+          style={styles.backIcon}
+          contentFit="contain"
+        />
       </Pressable>
 
       <View style={styles.noteContainer}>
@@ -114,9 +117,9 @@ const styles = StyleSheet.create({
   backButtonPressed: {
     opacity: 0.65,
   },
-  backText: {
-    fontFamily: 'StardewFontBold',
-    fontSize: 24,
+  backIcon: {
+    width: 44,
+    height: 44,
   },
   noteContainer: {
     flex: 1,

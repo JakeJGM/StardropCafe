@@ -8,6 +8,7 @@ import com.example.stardropcafe.entity.Beverage;
 import com.example.stardropcafe.entity.BeverageContent;
 import com.example.stardropcafe.entity.Recipe;
 import com.example.stardropcafe.repository.BeverageRepository;
+import com.example.stardropcafe.repository.BeverageSpecifications;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -27,7 +28,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class BeverageService {
 
-    private static final List<String> ALLOWED_TYPES = List.of("Coffee", "Tea", "Spirit", "Matcha");
+    private static final List<String> ALLOWED_TYPES = List.of("Coffee", "Tea", "Spirit");
     private static final List<String> ALLOWED_TEMPERATURES = List.of("Hot", "Room-temp", "Iced", "Cold", "Frozen");
     private static final int MIN_CONTENTS = 1;
     private static final int MAX_CONTENTS = 3;
@@ -69,8 +70,10 @@ public class BeverageService {
         }
     }
 
-    public PageResponseDTO<BeverageResponseDTO> findAllBeverageResponses(Pageable pageable) {
-        return PageResponseDTO.from(beverageRepository.findAll(pageable)
+    public PageResponseDTO<BeverageResponseDTO> findAllBeverageResponses(
+            List<String> types, List<String> temperatures, List<UUID> contentIds, Pageable pageable) {
+        return PageResponseDTO.from(beverageRepository
+                .findAll(BeverageSpecifications.matching(types, temperatures, contentIds), pageable)
                 .map(BeverageResponseDTO::from));
     }
 

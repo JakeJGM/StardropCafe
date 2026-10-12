@@ -4,7 +4,14 @@ import {
   PagedResult,
   toPagedResult,
 } from '@/types/api-wrappers';
-import { Beverage, CreateBeverageRequest, Recipe } from '@/types/sc-entities';
+import {
+  Beverage,
+  BeverageContent,
+  BeverageFilters,
+  BeverageOptions,
+  CreateBeverageRequest,
+  Recipe,
+} from '@/types/sc-entities';
 import axios from 'axios';
 import Constants from 'expo-constants';
 
@@ -25,9 +32,30 @@ const apiClient = axios.create({
   paramsSerializer: { indexes: null },
 });
 
-export const getBeverages = async (params: PageParams = {}): Promise<PagedResult<Beverage>> => {
-  const response = await apiClient.get<PageResponse<Beverage>>(`/beverages`, { params });
+export const getBeverages = async (
+  params: PageParams = {},
+  filters?: BeverageFilters,
+): Promise<PagedResult<Beverage>> => {
+  const response = await apiClient.get<PageResponse<Beverage>>(`/beverages`, {
+    params: {
+      ...params,
+      type: filters?.types,
+      temperature: filters?.temperatures,
+      contentId: filters?.contentIds,
+    },
+  });
+  // Built from the paging params alone; callers pass the filters with every page.
   return toPagedResult(response.data, params);
+};
+
+export const getBeverageOptions = async (): Promise<BeverageOptions> => {
+  const response = await apiClient.get<BeverageOptions>(`/beverages/options`);
+  return response.data;
+};
+
+export const getBeverageContents = async (): Promise<BeverageContent[]> => {
+  const response = await apiClient.get<BeverageContent[]>(`/beverage-contents`);
+  return response.data;
 };
 
 export const getBeverageById = async (id: string): Promise<Beverage> => {
