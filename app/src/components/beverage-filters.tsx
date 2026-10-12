@@ -117,6 +117,13 @@ export default function BeverageFilters({ filters, onChange, children }: Beverag
         >
           <Text style={styles.dropdownActionText}>Clear</Text>
         </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => setOpenCategory(null)}
+          style={({ pressed }) => [styles.okAction, pressed && styles.pressed]}
+        >
+          <Text style={styles.dropdownActionText}>Ok</Text>
+        </Pressable>
       </>
     );
   };
@@ -263,10 +270,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFE6B7',
     paddingVertical: 8,
   },
+  // The minimum keeps Clear and Ok from overlapping when there's only one option.
   optionList: {
+    minHeight: 80,
     maxHeight: 320,
   },
-  // Keeps labels clear of the Clear button in the top-right corner.
+  // Keeps labels clear of the Clear and Ok buttons in the right-hand corners.
   optionListContent: {
     paddingRight: 72,
   },
@@ -306,6 +315,13 @@ const styles = StyleSheet.create({
   clearAction: {
     position: 'absolute',
     top: 0,
+    right: 0,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  okAction: {
+    position: 'absolute',
+    bottom: 0,
     right: 0,
     paddingHorizontal: 16,
     paddingVertical: 10,

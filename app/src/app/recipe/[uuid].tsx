@@ -58,7 +58,7 @@ export default function BeverageRecipeScreen() {
           <Text style={styles.sectionTitle}>Ingredients:</Text>
           {recipe.ingredients.map((ingredient) => (
             <Text key={ingredient.id} style={styles.recipeText}>
-              {`• ${ingredient.unitCount} ${ingredient.unitType} of ${ingredient.name}`}
+              {`* ${ingredient.unitCount} ${ingredient.unitType} of ${ingredient.name}`}
             </Text>
           ))}
         </View>
