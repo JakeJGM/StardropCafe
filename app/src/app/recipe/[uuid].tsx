@@ -16,7 +16,7 @@ export default function BeverageRecipeScreen() {
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Back to homepage"
-        onPress={() => router.replace('/')}
+        onPress={() => router.back()}
         style={({ pressed }) => [styles.backButton, pressed && styles.backButtonPressed]}
       >
         <Text style={[styles.backText, { color: theme.text }]}>{'< Back'}</Text>
