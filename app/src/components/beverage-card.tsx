@@ -17,21 +17,14 @@ export type BeverageCardProps = {
 const beverageImages = {
   Coffee: require('../../assets/images/beverage_card/coffee.webp'),
   Tea: require('../../assets/images/beverage_card/green-tea.webp'),
+  Spirit: require('../../assets/images/beverage_card/pale-ale.webp'),
 } as const;
 
 // Only two illustrations exist, so the other types borrow the closer of the two.
 const beverageImageByType: Record<BeverageType, ImageSourcePropType> = {
   Coffee: beverageImages.Coffee,
   Tea: beverageImages.Tea,
-  Matcha: beverageImages.Tea,
-  Spirit: beverageImages.Coffee,
-  'Dirty Soda': beverageImages.Coffee,
-};
-
-const temperatureLabels: Record<BeverageTemperature, string> = {
-  hot: 'Hot',
-  iced: 'Iced',
-  cold: 'Cold',
+  Spirit: beverageImages.Spirit,
 };
 
 export default function BeverageCard({ recipeId, name, beverageType, temperature, ingredients }: BeverageCardProps) {
@@ -81,7 +74,7 @@ export default function BeverageCard({ recipeId, name, beverageType, temperature
           <View style={styles.details}>
             <View style={styles.detailsHeader}>
               <Text style={styles.name}>{name}</Text>
-              <Text style={styles.temperature}>{temperatureLabels[temperature]}</Text>
+              <Text style={styles.temperature}>{temperature}</Text>
             </View>
             <View style={styles.divider}>
             </View>

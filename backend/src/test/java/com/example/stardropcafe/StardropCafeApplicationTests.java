@@ -186,13 +186,13 @@ class StardropCafeApplicationTests {
         beverageRepository.save(espressoShot);
 
         Beverage matchaLatte = beverage("Matcha Latte");
-        matchaLatte.setType("Matcha");
-        matchaLatte.setTemperature("iced");
+        matchaLatte.setType("Tea");
+        matchaLatte.setTemperature("Iced");
         matchaLatte.setBeverageContents(Set.of(milk, matcha));
         beverageRepository.save(matchaLatte);
 
         // Values within one field are alternatives, and casing is ignored.
-        mockMvc.perform(get("/beverages").param("type", "coffee", "Matcha"))
+        mockMvc.perform(get("/beverages").param("type", "coffee", "Tea"))
                 .andExpect(jsonPath("$.totalElements").value(3));
         mockMvc.perform(get("/beverages").param("temperature", "Iced"))
                 .andExpect(jsonPath("$.content[*].name", containsInAnyOrder("Matcha Latte")));

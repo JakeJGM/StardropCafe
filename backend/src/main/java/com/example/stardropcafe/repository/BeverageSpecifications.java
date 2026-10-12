@@ -38,8 +38,8 @@ public final class BeverageSpecifications {
         return Specification.allOf(specs);
     }
 
-    // Case-insensitive because stored values don't always match the casing that
-    // /beverages/options lists (seed data has "hot" where the options say "Hot").
+    // Case-insensitive so rows saved before temperatures were capitalized ("hot")
+    // still match the values /beverages/options lists ("Hot").
     private static Specification<Beverage> fieldInIgnoreCase(String field, Collection<String> values) {
         List<String> lowered = values.stream().map(value -> value.toLowerCase(Locale.ROOT)).toList();
         return (root, query, cb) -> cb.lower(root.get(field)).in(lowered);
