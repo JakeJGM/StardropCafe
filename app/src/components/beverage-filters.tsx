@@ -79,9 +79,14 @@ export default function BeverageFilters({ filters, onChange, children }: Beverag
     }
 
     const selected = filters[category];
+    const canClear = selected.length > 0;
     return (
       <>
-        <ScrollView style={styles.optionList} bounces={false}>
+        <ScrollView
+          style={styles.optionList}
+          contentContainerStyle={styles.optionListContent}
+          bounces={false}
+        >
           {options.map((option) => {
             const checked = selected.includes(option.value);
             return (
@@ -100,15 +105,18 @@ export default function BeverageFilters({ filters, onChange, children }: Beverag
             );
           })}
         </ScrollView>
-        {selected.length > 0 && (
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => onChange({ ...filters, [category]: [] })}
-            style={({ pressed }) => [styles.dropdownAction, pressed && styles.pressed]}
-          >
-            <Text style={styles.dropdownActionText}>Clear</Text>
-          </Pressable>
-        )}
+        {/* Always laid out and only hidden, so showing it never resizes the dropdown. */}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityElementsHidden={!canClear}
+          importantForAccessibility={canClear ? 'auto' : 'no-hide-descendants'}
+          aria-hidden={!canClear}
+          disabled={!canClear}
+          onPress={() => onChange({ ...filters, [category]: [] })}
+          style={({ pressed }) => [styles.clearAction, !canClear && styles.hidden, pressed && styles.pressed]}
+        >
+          <Text style={styles.dropdownActionText}>Clear</Text>
+        </Pressable>
       </>
     );
   };
@@ -135,8 +143,10 @@ export default function BeverageFilters({ filters, onChange, children }: Beverag
               onPress={() => setOpenCategory(isOpen ? null : key)}
               style={({ pressed }) => [styles.pill, isActive && styles.pillActive, pressed && styles.pressed]}
             >
-              <Text style={[styles.pillText, isActive && styles.pillTextActive]}>
-                {selectedCount > 0 ? `${label} (${selectedCount})` : label}
+              <Text style={[styles.pillText, isActive && styles.pillTextActive]}>{label}</Text>
+              {/* Fixed width fits one digit, so a count appearing doesn't resize the pill. */}
+              <Text style={[styles.pillText, styles.pillCount, isActive && styles.pillTextActive]} numberOfLines={1}>
+                {selectedCount > 0 ? `(${selectedCount})` : ''}
               </Text>
               <View style={[styles.chevron, isActive && styles.chevronActive, isOpen && styles.chevronOpen]} />
             </Pressable>
@@ -207,6 +217,9 @@ const styles = StyleSheet.create({
     color: '#3C3C43',
     fontSize: 18,
   },
+  pillCount: {
+    width: 18,
+  },
   pillTextActive: {
     color: '#FFE6B7',
   },
@@ -253,6 +266,10 @@ const styles = StyleSheet.create({
   optionList: {
     maxHeight: 320,
   },
+  // Keeps labels clear of the Clear button in the top-right corner.
+  optionListContent: {
+    paddingRight: 72,
+  },
   option: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -285,6 +302,16 @@ const styles = StyleSheet.create({
     color: '#3C3C43',
     fontSize: 20,
     textAlign: 'center',
+  },
+  clearAction: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  hidden: {
+    opacity: 0,
   },
   dropdownAction: {
     alignSelf: 'flex-end',
