@@ -1,1 +1,28 @@
-services: { }
+# Development database. Spring Boot starts this automatically when run with the postgres profile:
+#   SPRING_PROFILES_ACTIVE=postgres ./gradlew bootRun
+# Values come from backend/.env (copy backend/.env.example to backend/.env).
+# For running the published image on other machines, see docker/backend.compose.yaml.
+
+# Separate project name so dev containers and volumes never collide with the deployed stack.
+name: stardropcafe-dev
+
+services:
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql
+    ports:
+      # The app runs outside Docker in dev, so the port is published, but only to this machine.
+      - "127.0.0.1:${POSTGRES_PORT}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:

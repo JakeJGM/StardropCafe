@@ -82,7 +82,7 @@ class StardropCafeApplicationTests {
                 {
                   "name": "Stardrop Latte",
                   "type": "Coffee",
-                  "temperature": "hot",
+                  "temperature": "Hot",
                   "newBeverageContentNames": ["Espresso"]
                 }
                 """;
@@ -94,7 +94,7 @@ class StardropCafeApplicationTests {
                 .andExpect(jsonPath("$.id").isNotEmpty())
                 .andExpect(jsonPath("$.name").value("Stardrop Latte"))
                 .andExpect(jsonPath("$.type").value("Coffee"))
-                .andExpect(jsonPath("$.temperature").value("hot"))
+                .andExpect(jsonPath("$.temperature").value("Hot"))
                 .andExpect(jsonPath("$.beverageContents", hasSize(1)))
                 .andExpect(jsonPath("$.recipeId").doesNotExist());
     }
@@ -246,7 +246,7 @@ class StardropCafeApplicationTests {
                 {
                   "name": "Berry Fizz",
                   "type": "Soda",
-                  "temperature": "cold"
+                  "temperature": "Cold"
                 }
                 """;
 
@@ -254,7 +254,7 @@ class StardropCafeApplicationTests {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Beverage type must be one of: Coffee, Tea, Spirit, Matcha, Dirty Soda"));
+                .andExpect(jsonPath("$.message").value("Beverage type must be one of: Coffee, Tea, Spirit"));
     }
 
     @Test
@@ -271,7 +271,7 @@ class StardropCafeApplicationTests {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Beverage temperature must be one of: hot, iced, cold"));
+                .andExpect(jsonPath("$.message").value("Beverage temperature must be one of: Hot, Room-temp, Iced, Cold, Frozen"));
     }
 
     @Test
@@ -327,9 +327,9 @@ class StardropCafeApplicationTests {
     void retrievesBeverageOptions() throws Exception {
         mockMvc.perform(get("/beverages/options"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.types", hasSize(5)))
-                .andExpect(jsonPath("$.temperatures", hasSize(3)))
-                .andExpect(jsonPath("$.temperatures[0]").value("hot"));
+                .andExpect(jsonPath("$.types", hasSize(3)))
+                .andExpect(jsonPath("$.temperatures", hasSize(5)))
+                .andExpect(jsonPath("$.temperatures[0]").value("Hot"));
     }
 
     @Test
@@ -352,7 +352,7 @@ class StardropCafeApplicationTests {
                 {
                   "name": "Honey Latte",
                   "type": "Coffee",
-                  "temperature": "iced",
+                  "temperature": "Iced",
                   "beverageContentIds": ["%s"],
                   "newBeverageContentNames": ["Honey", "milk", "  "]
                 }
@@ -375,7 +375,7 @@ class StardropCafeApplicationTests {
                 {
                   "name": "Plain Coffee",
                   "type": "Coffee",
-                  "temperature": "hot"
+                  "temperature": "Hot"
                 }
                 """;
 
@@ -392,7 +392,7 @@ class StardropCafeApplicationTests {
                 {
                   "name": "Kitchen Sink",
                   "type": "Coffee",
-                  "temperature": "hot",
+                  "temperature": "Hot",
                   "newBeverageContentNames": ["A", "B", "C", "D"]
                 }
                 """;
@@ -507,7 +507,7 @@ class StardropCafeApplicationTests {
                 {
                   "name": "Iced Stardrop Latte",
                   "type": "Coffee",
-                  "temperature": "iced",
+                  "temperature": "Iced",
                   "newBeverageContentNames": ["Vanilla"]
                 }
                 """;
@@ -517,7 +517,7 @@ class StardropCafeApplicationTests {
                         .content(request))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Iced Stardrop Latte"))
-                .andExpect(jsonPath("$.temperature").value("iced"))
+                .andExpect(jsonPath("$.temperature").value("Iced"))
                 .andExpect(jsonPath("$.beverageContents", hasSize(1)))
                 .andExpect(jsonPath("$.beverageContents[0].name").value("Vanilla"));
     }
@@ -527,7 +527,7 @@ class StardropCafeApplicationTests {
         mockMvc.perform(put("/beverages/{id}", UUID.randomUUID())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"name": "X", "type": "Coffee", "temperature": "hot", "newBeverageContentNames": ["Y"]}
+                                {"name": "X", "type": "Coffee", "temperature": "Hot", "newBeverageContentNames": ["Y"]}
                                 """))
                 .andExpect(status().isNotFound());
     }
