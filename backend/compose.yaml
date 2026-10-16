@@ -1,7 +1,7 @@
 # Development database. Spring Boot starts this automatically when run with the postgres profile:
 #   SPRING_PROFILES_ACTIVE=postgres ./gradlew bootRun
 # Values come from backend/.env (copy backend/.env.example to backend/.env).
-# For running the published image on other machines, see docker/backend.compose.yaml.
+# For running the published image on other machines, see docker/compose.yaml.
 
 # Separate project name so dev containers and volumes never collide with the deployed stack.
 name: stardropcafe-dev
