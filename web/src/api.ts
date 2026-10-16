@@ -1,5 +1,7 @@
-// Defaults to the Spring Boot dev server; set VITE_API_URL in web/.env to override.
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
+// Resolved in order: runtime config (API_URL on the Docker container, served as /config.js),
+// VITE_API_URL from web/.env at build time, then the Spring Boot dev server.
+const API_URL =
+  window.__APP_CONFIG__?.apiUrl || import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
 export type BeverageOptions = {
   types: string[]
