@@ -1,4 +1,4 @@
-# Tests the backend, then builds its image and pushes it to GHCR, where docker/backend.compose.yaml pulls it from.
+# Tests the backend, then builds its image and pushes it to GHCR, where docker/compose.yaml pulls it from.
 # Pull requests run the same tests and build but never push, so a broken image can't be published.
 name: Backend image
 
@@ -24,7 +24,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # Must match the image in docker/backend.compose.yaml; GHCR names have to be lowercase.
+  # Must match the backend image in docker/compose.yaml; GHCR names have to be lowercase.
   IMAGE: ghcr.io/jakejgm/stardropcafe-backend
 
 jobs:
