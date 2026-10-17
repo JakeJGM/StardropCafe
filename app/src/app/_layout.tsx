@@ -14,10 +14,22 @@ const queryClient = new QueryClient({
   },
 });
 
+import { ApiUrlProvider, useApiUrl } from '@/hooks/use-api-url';
 import { useTheme } from '@/hooks/use-theme';
 
 export default function RootLayout() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ApiUrlProvider>
+        <RootStack />
+      </ApiUrlProvider>
+    </QueryClientProvider>
+  );
+}
+
+function RootStack() {
   const theme = useTheme();
+  const { isLoading, apiUrl } = useApiUrl();
   const [fontsLoaded] = useFonts({
     SourceCodePro: SourceCodePro_400Regular,
     SourceCodeProBold: SourceCodePro_700Bold,
@@ -25,19 +37,29 @@ export default function RootLayout() {
     StardewFontBold: require('../../assets/fonts/svbold.otf'),
   });
 
-  if (!fontsLoaded) {
+  if (!fontsLoaded || isLoading) {
     return null;
   }
 
+  const hasApiUrl = apiUrl !== null;
+
+  // Until an API URL is saved, setup is the only reachable screen. Saving it
+  // flips the guards, which sends the user on to the index screen.
   return (
-    <QueryClientProvider client={queryClient}>
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          animation: 'fade',
-          contentStyle: { backgroundColor: theme.background },
-        }}
-      />
-    </QueryClientProvider>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        animation: 'fade',
+        contentStyle: { backgroundColor: theme.background },
+      }}
+    >
+      <Stack.Protected guard={hasApiUrl}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="recipe/[uuid]" />
+      </Stack.Protected>
+      <Stack.Protected guard={!hasApiUrl}>
+        <Stack.Screen name="setup" />
+      </Stack.Protected>
+    </Stack>
   );
 }
