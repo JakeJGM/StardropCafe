@@ -18,6 +18,8 @@ export type BeverageFiltersProps = {
   onChange: (filters: Filters) => void;
   // The list being filtered; an open dropdown is drawn over it.
   children: ReactNode;
+  // Shown at the start of the bar, before the filters, and doesn't scroll with them.
+  leading?: ReactNode;
 };
 
 const categories: readonly { key: Category; label: string }[] = [
@@ -26,7 +28,7 @@ const categories: readonly { key: Category; label: string }[] = [
   { key: 'contentIds', label: 'Contents' },
 ];
 
-export default function BeverageFilters({ filters, onChange, children }: BeverageFiltersProps) {
+export default function BeverageFilters({ filters, onChange, children, leading }: BeverageFiltersProps) {
   const [openCategory, setOpenCategory] = useState<Category | null>(null);
   const [barHeight, setBarHeight] = useState(0);
 
@@ -130,36 +132,38 @@ export default function BeverageFilters({ filters, onChange, children }: Beverag
 
   return (
     <View style={styles.container}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.barScroll}
-        contentContainerStyle={styles.bar}
-        onLayout={({ nativeEvent }) => setBarHeight(nativeEvent.layout.height)}
-      >
-        {categories.map(({ key, label }) => {
-          const selectedCount = filters[key].length;
-          const isOpen = openCategory === key;
-          const isActive = isOpen || selectedCount > 0;
-          return (
-            <Pressable
-              key={key}
-              accessibilityRole="button"
-              accessibilityLabel={`${label} filter${selectedCount > 0 ? `, ${selectedCount} selected` : ''}`}
-              accessibilityState={{ expanded: isOpen }}
-              onPress={() => setOpenCategory(isOpen ? null : key)}
-              style={({ pressed }) => [styles.pill, isActive && styles.pillActive, pressed && styles.pressed]}
-            >
-              <Text style={[styles.pillText, isActive && styles.pillTextActive]}>{label}</Text>
-              {/* Fixed width fits one digit, so a count appearing doesn't resize the pill. */}
-              <Text style={[styles.pillText, styles.pillCount, isActive && styles.pillTextActive]} numberOfLines={1}>
-                {selectedCount > 0 ? `(${selectedCount})` : ''}
-              </Text>
-              <View style={[styles.chevron, isActive && styles.chevronActive, isOpen && styles.chevronOpen]} />
-            </Pressable>
-          );
-        })}
-      </ScrollView>
+      <View style={styles.bar} onLayout={({ nativeEvent }) => setBarHeight(nativeEvent.layout.height)}>
+        {leading !== undefined && <View style={styles.leading}>{leading}</View>}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.barScroll}
+          contentContainerStyle={[styles.pills, leading !== undefined && styles.pillsAfterLeading]}
+        >
+          {categories.map(({ key, label }) => {
+            const selectedCount = filters[key].length;
+            const isOpen = openCategory === key;
+            const isActive = isOpen || selectedCount > 0;
+            return (
+              <Pressable
+                key={key}
+                accessibilityRole="button"
+                accessibilityLabel={`${label} filter${selectedCount > 0 ? `, ${selectedCount} selected` : ''}`}
+                accessibilityState={{ expanded: isOpen }}
+                onPress={() => setOpenCategory(isOpen ? null : key)}
+                style={({ pressed }) => [styles.pill, isActive && styles.pillActive, pressed && styles.pressed]}
+              >
+                <Text style={[styles.pillText, isActive && styles.pillTextActive]}>{label}</Text>
+                {/* Fixed width fits one digit, so a count appearing doesn't resize the pill. */}
+                <Text style={[styles.pillText, styles.pillCount, isActive && styles.pillTextActive]} numberOfLines={1}>
+                  {selectedCount > 0 ? `(${selectedCount})` : ''}
+                </Text>
+                <View style={[styles.chevron, isActive && styles.chevronActive, isOpen && styles.chevronOpen]} />
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      </View>
 
       {children}
 
@@ -187,20 +191,30 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  // Stays one row and scrolls sideways once selection counts widen the pills.
   // Without flexShrink: 0, a tall list below squeezes the bar to nothing.
-  barScroll: {
-    flexGrow: 0,
-    flexShrink: 0,
-    width: '100%',
-    maxWidth: 720,
-    alignSelf: 'center',
-  },
   bar: {
+    alignItems: 'center',
+    alignSelf: 'center',
+    flexDirection: 'row',
+    flexShrink: 0,
+    maxWidth: 720,
+    paddingBottom: 12,
+    paddingTop: 16,
+    width: '100%',
+  },
+  leading: {
+    paddingLeft: 24,
+  },
+  // The pills stay one row and scroll sideways once selection counts widen them.
+  barScroll: {
+    flex: 1,
+  },
+  pills: {
     gap: 8,
     paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 12,
+  },
+  pillsAfterLeading: {
+    paddingLeft: 12,
   },
   pressed: {
     opacity: 0.65,
