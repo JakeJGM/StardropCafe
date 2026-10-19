@@ -32,8 +32,10 @@ function Menu() {
   const theme = useTheme();
   const listRef = useRef<FlatList<Beverage>>(null);
   const [filters, setFilters] = useState<Filters>(noFilters);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [topBarHeight, setTopBarHeight] = useState(0);
+  const containerRef = useRef<View>(null);
+  const gearRef = useRef<View>(null);
+  // Where the gear's bottom edge is, while the settings menu is open.
+  const [settingsMenuTop, setSettingsMenuTop] = useState<number | null>(null);
   const hasFilters = Object.values(filters).some((values) => values.length > 0);
 
   const {
@@ -73,8 +75,17 @@ function Menu() {
     listRef.current?.scrollToOffset({ offset: 0, animated: false });
   };
 
+  // The gear sits in the filter bar, so its position is measured rather than known.
+  const openSettings = () => {
+    if (gearRef.current !== null && containerRef.current !== null) {
+      gearRef.current.measureLayout(containerRef.current, (_x, y, _width, height) => {
+        setSettingsMenuTop(y + height);
+      });
+    }
+  };
+
   const changeServerUrl = () => {
-    setIsSettingsOpen(false);
+    setSettingsMenuTop(null);
     router.push('/change-server-url');
   };
 
@@ -146,40 +157,41 @@ function Menu() {
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]} edges={['top']}>
-      <View style={styles.container}>
-        <View
-          style={styles.topBar}
-          onLayout={({ nativeEvent }) => setTopBarHeight(nativeEvent.layout.height)}
+      <View ref={containerRef} style={styles.container}>
+        <BeverageFilters
+          filters={filters}
+          onChange={changeFilters}
+          leading={
+            <Pressable
+              ref={gearRef}
+              accessibilityRole="button"
+              accessibilityLabel="Settings"
+              accessibilityState={{ expanded: settingsMenuTop !== null }}
+              onPress={openSettings}
+              style={({ pressed }) => pressed && styles.pressed}
+            >
+              <Image
+                source={require('../../assets/images/home/gear.svg')}
+                style={styles.gearIcon}
+                contentFit="contain"
+              />
+            </Pressable>
+          }
         >
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Settings"
-            accessibilityState={{ expanded: isSettingsOpen }}
-            onPress={() => setIsSettingsOpen(!isSettingsOpen)}
-            style={({ pressed }) => pressed && styles.pressed}
-          >
-            <Image
-              source={require('../../assets/images/home/gear.svg')}
-              style={styles.gearIcon}
-              contentFit="contain"
-            />
-          </Pressable>
-        </View>
-
-        <BeverageFilters filters={filters} onChange={changeFilters}>
           {renderBody()}
         </BeverageFilters>
 
-        {/* Drawn over the filter bar too, at this level rather than inside the
-            top bar, since Android ignores touches outside a parent's bounds. */}
-        {isSettingsOpen && (
-          <View style={[styles.overlay, { top: topBarHeight }]}>
+        {/* Covers the filter bar too, so a tap anywhere else closes the menu. Drawn
+            at this level rather than inside the bar, since Android ignores
+            touches outside a parent's bounds. */}
+        {settingsMenuTop !== null && (
+          <View style={styles.overlay}>
             <Pressable
               accessibilityLabel="Close settings"
-              onPress={() => setIsSettingsOpen(false)}
+              onPress={() => setSettingsMenuTop(null)}
               style={StyleSheet.absoluteFill}
             />
-            <View style={styles.settingsColumn}>
+            <View style={[styles.settingsColumn, { marginTop: settingsMenuTop }]}>
               <View style={styles.settingsOuterBorder}>
                 <View style={styles.settingsInnerBorder}>
                   <View style={styles.settingsMenu}>
@@ -211,27 +223,16 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.65,
   },
-  // Lines the gear up with the left edge of the filter bar below it.
-  topBar: {
-    width: '100%',
-    maxWidth: 720,
-    alignSelf: 'center',
-    alignItems: 'flex-start',
-    paddingHorizontal: 24,
-    paddingTop: 12,
-  },
   // 3x the 15px pixel art, so the pixels stay even.
   gearIcon: {
     width: 45,
     height: 45,
   },
   overlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+    ...StyleSheet.absoluteFill,
     paddingHorizontal: 24,
   },
+  // Lines the menu up with the left edge of the bar, under the gear.
   settingsColumn: {
     width: '100%',
     maxWidth: 672,
