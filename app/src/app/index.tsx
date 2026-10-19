@@ -1,10 +1,3 @@
-import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query';
-import { Image } from 'expo-image';
-import { router } from 'expo-router';
-import { useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { getBeverages } from '@/api/api';
 import BeverageCard from '@/components/beverage-card';
 import BeverageFilters from '@/components/beverage-filters';
@@ -13,6 +6,12 @@ import { useApiUrl } from '@/hooks/use-api-url';
 import { useTheme } from '@/hooks/use-theme';
 import type { PageParams } from '@/types/api-wrappers';
 import type { Beverage, BeverageFilters as Filters } from '@/types/sc-entities';
+import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query';
+import { Image } from 'expo-image';
+import { router } from 'expo-router';
+import { useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const PAGE_SIZE = 20;
 
