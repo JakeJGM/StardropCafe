@@ -211,12 +211,12 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.65,
   },
-  // Lines the gear up with the right edge of the filter bar below it.
+  // Lines the gear up with the left edge of the filter bar below it.
   topBar: {
     width: '100%',
     maxWidth: 720,
     alignSelf: 'center',
-    alignItems: 'flex-end',
+    alignItems: 'flex-start',
     paddingHorizontal: 24,
     paddingTop: 12,
   },
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 672,
     alignSelf: 'center',
-    alignItems: 'flex-end',
+    alignItems: 'flex-start',
   },
   // Same frame as the filter dropdowns.
   settingsOuterBorder: {
