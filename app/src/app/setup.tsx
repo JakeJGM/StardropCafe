@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -15,10 +16,22 @@ import { Text } from '@/components/text';
 import { normalizeApiUrl, useApiUrl } from '@/hooks/use-api-url';
 
 export default function SetupScreen() {
-  const { saveApiUrl } = useApiUrl();
-  const [input, setInput] = useState(suggestedApiUrl);
+  const { apiUrl, saveApiUrl } = useApiUrl();
+  // Read once, so the copy doesn't change while first-time setup fades out.
+  const [isChanging] = useState(apiUrl !== null);
+  const [input, setInput] = useState(apiUrl ?? suggestedApiUrl);
   const [error, setError] = useState<string | null>(null);
   const [isChecking, setIsChecking] = useState(false);
+
+  // On first-time setup, saving flips the layout's guards instead.
+  const leave = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      // Opened directly, as by reloading the page on web.
+      router.replace('/');
+    }
+  };
 
   const connect = async () => {
     const url = normalizeApiUrl(input);
@@ -40,6 +53,9 @@ export default function SetupScreen() {
     try {
       // Unmounts this screen on success, so isChecking is left as is.
       await saveApiUrl(url);
+      if (isChanging) {
+        leave();
+      }
     } catch {
       setError('Could not save the URL. Please try again.');
       setIsChecking(false);
@@ -56,9 +72,13 @@ export default function SetupScreen() {
           <View style={styles.innerBorder}>
             <View style={styles.innerPageBorder}>
               <View style={styles.note}>
-                <Text style={styles.title}>Welcome to Stardrop Cafe!</Text>
+                <Text style={styles.title}>
+                  {isChanging ? 'Change server URL' : 'Welcome to Stardrop Cafe!'}
+                </Text>
                 <Text style={styles.body}>
-                  Enter the address of your recipe server to get started.
+                  {isChanging
+                    ? 'Enter the address of your recipe server.'
+                    : 'Enter the address of your recipe server to get started.'}
                 </Text>
                 <TextInput
                   accessibilityLabel="Recipe server URL"
@@ -76,16 +96,28 @@ export default function SetupScreen() {
                   value={input}
                 />
                 {error !== null && <Text style={styles.error}>{error}</Text>}
-                <Pressable
-                  accessibilityRole="button"
-                  disabled={isChecking}
-                  onPress={connect}
-                  style={({ pressed }) => [styles.connectButton, pressed && styles.connectButtonPressed]}
-                >
-                  {isChecking
-                    ? <ActivityIndicator color="#853605" />
-                    : <Text style={styles.connectText}>Connect</Text>}
-                </Pressable>
+                <View style={styles.actions}>
+                  {isChanging && (
+                    <Pressable
+                      accessibilityRole="button"
+                      disabled={isChecking}
+                      onPress={leave}
+                      style={({ pressed }) => [styles.actionButton, pressed && styles.actionButtonPressed]}
+                    >
+                      <Text style={styles.cancelText}>Cancel</Text>
+                    </Pressable>
+                  )}
+                  <Pressable
+                    accessibilityRole="button"
+                    disabled={isChecking}
+                    onPress={connect}
+                    style={({ pressed }) => [styles.actionButton, pressed && styles.actionButtonPressed]}
+                  >
+                    {isChecking
+                      ? <ActivityIndicator color="#853605" />
+                      : <Text style={styles.connectText}>Connect</Text>}
+                  </Pressable>
+                </View>
               </View>
             </View>
           </View>
@@ -151,17 +183,24 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     marginTop: 12,
   },
-  connectButton: {
-    alignItems: 'center',
+  actions: {
     alignSelf: 'flex-end',
-    justifyContent: 'center',
+    flexDirection: 'row',
     marginTop: 16,
+  },
+  actionButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
     minHeight: 44,
     paddingHorizontal: 24,
     paddingVertical: 12,
   },
-  connectButtonPressed: {
+  actionButtonPressed: {
     opacity: 0.65,
+  },
+  cancelText: {
+    color: '#853605',
+    fontSize: 22,
   },
   connectText: {
     color: '#853605',

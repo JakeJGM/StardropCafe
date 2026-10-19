@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useQueryClient } from '@tanstack/react-query';
 import { createContext, type ReactNode, use, useEffect, useState } from 'react';
 
 import { setApiBaseUrl } from '@/api/api';
@@ -15,7 +16,9 @@ type ApiUrlState = {
 
 const ApiUrlContext = createContext<ApiUrlState | null>(null);
 
+// Must be rendered inside a QueryClientProvider.
 export function ApiUrlProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(true);
   const [apiUrl, setApiUrl] = useState<string | null>(null);
 
@@ -36,6 +39,9 @@ export function ApiUrlProvider({ children }: { children: ReactNode }) {
     await AsyncStorage.setItem(STORAGE_KEY, url);
     // Set before state, so screens that mount on the change request the new URL.
     setApiBaseUrl(url);
+    // Cached responses came from the previous server. Resetting drops them and
+    // refetches the queries still on screen from the new one.
+    queryClient.resetQueries();
     setApiUrl(url);
   };
 

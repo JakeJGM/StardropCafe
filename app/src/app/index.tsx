@@ -1,4 +1,6 @@
 import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query';
+import { Image } from 'expo-image';
+import { router } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,6 +9,7 @@ import { getBeverages } from '@/api/api';
 import BeverageCard from '@/components/beverage-card';
 import BeverageFilters from '@/components/beverage-filters';
 import { Text } from '@/components/text';
+import { useApiUrl } from '@/hooks/use-api-url';
 import { useTheme } from '@/hooks/use-theme';
 import type { PageParams } from '@/types/api-wrappers';
 import type { Beverage, BeverageFilters as Filters } from '@/types/sc-entities';
@@ -19,9 +22,18 @@ const firstPageParams: PageParams = { page: 0, size: PAGE_SIZE, sort: 'name,asc'
 const noFilters: Filters = { types: [], temperatures: [], contentIds: [] };
 
 export default function HomeScreen() {
+  const { apiUrl } = useApiUrl();
+  // Remounted when the server changes, so filters picked from the old server's
+  // options don't carry over.
+  return <Menu key={apiUrl} />;
+}
+
+function Menu() {
   const theme = useTheme();
   const listRef = useRef<FlatList<Beverage>>(null);
   const [filters, setFilters] = useState<Filters>(noFilters);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [topBarHeight, setTopBarHeight] = useState(0);
   const hasFilters = Object.values(filters).some((values) => values.length > 0);
 
   const {
@@ -59,6 +71,11 @@ export default function HomeScreen() {
   const changeFilters = (nextFilters: Filters) => {
     setFilters(nextFilters);
     listRef.current?.scrollToOffset({ offset: 0, animated: false });
+  };
+
+  const changeServerUrl = () => {
+    setIsSettingsOpen(false);
+    router.push('/change-server-url');
   };
 
   const header = (
@@ -129,9 +146,57 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]} edges={['top']}>
-      <BeverageFilters filters={filters} onChange={changeFilters}>
-        {renderBody()}
-      </BeverageFilters>
+      <View style={styles.container}>
+        <View
+          style={styles.topBar}
+          onLayout={({ nativeEvent }) => setTopBarHeight(nativeEvent.layout.height)}
+        >
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Settings"
+            accessibilityState={{ expanded: isSettingsOpen }}
+            onPress={() => setIsSettingsOpen(!isSettingsOpen)}
+            style={({ pressed }) => pressed && styles.pressed}
+          >
+            <Image
+              source={require('../../assets/images/home/gear.svg')}
+              style={styles.gearIcon}
+              contentFit="contain"
+            />
+          </Pressable>
+        </View>
+
+        <BeverageFilters filters={filters} onChange={changeFilters}>
+          {renderBody()}
+        </BeverageFilters>
+
+        {/* Drawn over the filter bar too, at this level rather than inside the
+            top bar, since Android ignores touches outside a parent's bounds. */}
+        {isSettingsOpen && (
+          <View style={[styles.overlay, { top: topBarHeight }]}>
+            <Pressable
+              accessibilityLabel="Close settings"
+              onPress={() => setIsSettingsOpen(false)}
+              style={StyleSheet.absoluteFill}
+            />
+            <View style={styles.settingsColumn}>
+              <View style={styles.settingsOuterBorder}>
+                <View style={styles.settingsInnerBorder}>
+                  <View style={styles.settingsMenu}>
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={changeServerUrl}
+                      style={({ pressed }) => [styles.settingsOption, pressed && styles.pressed]}
+                    >
+                      <Text style={styles.settingsOptionText}>Change server URL</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              </View>
+            </View>
+          </View>
+        )}
+      </View>
     </SafeAreaView>
   );
 }
@@ -139,6 +204,62 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+  },
+  container: {
+    flex: 1,
+  },
+  pressed: {
+    opacity: 0.65,
+  },
+  // Lines the gear up with the right edge of the filter bar below it.
+  topBar: {
+    width: '100%',
+    maxWidth: 720,
+    alignSelf: 'center',
+    alignItems: 'flex-end',
+    paddingHorizontal: 24,
+    paddingTop: 12,
+  },
+  // 3x the 15px pixel art, so the pixels stay even.
+  gearIcon: {
+    width: 45,
+    height: 45,
+  },
+  overlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 24,
+  },
+  settingsColumn: {
+    width: '100%',
+    maxWidth: 672,
+    alignSelf: 'center',
+    alignItems: 'flex-end',
+  },
+  // Same frame as the filter dropdowns.
+  settingsOuterBorder: {
+    backgroundColor: '#b14e05',
+    borderRadius: 10,
+    marginTop: 4,
+    padding: 4,
+  },
+  settingsInnerBorder: {
+    backgroundColor: '#853605',
+    padding: 4,
+  },
+  settingsMenu: {
+    backgroundColor: '#FFE6B7',
+    paddingVertical: 4,
+  },
+  settingsOption: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  settingsOptionText: {
+    color: '#3C3C43',
+    fontSize: 22,
   },
   centered: {
     flex: 1,

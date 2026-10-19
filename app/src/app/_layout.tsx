@@ -44,7 +44,8 @@ function RootStack() {
   const hasApiUrl = apiUrl !== null;
 
   // Until an API URL is saved, setup is the only reachable screen. Saving it
-  // flips the guards, which sends the user on to the index screen.
+  // flips the guards, which sends the user on to the index screen. Afterwards
+  // the URL is changed from change-server-url, the same screen pushed on top.
   return (
     <Stack
       screenOptions={{
@@ -56,6 +57,7 @@ function RootStack() {
       <Stack.Protected guard={hasApiUrl}>
         <Stack.Screen name="index" />
         <Stack.Screen name="recipe/[uuid]" />
+        <Stack.Screen name="change-server-url" />
       </Stack.Protected>
       <Stack.Protected guard={!hasApiUrl}>
         <Stack.Screen name="setup" />
