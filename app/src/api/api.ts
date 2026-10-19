@@ -15,22 +15,28 @@ import {
 import axios from 'axios';
 import Constants from 'expo-constants';
 
-// Expo only inlines env vars prefixed with EXPO_PUBLIC_ into the client bundle;
-// a bare API_URL is stripped and reads as undefined at runtime.
-const configuredBaseUrl = process.env.EXPO_PUBLIC_API_URL;
-
-// Fallback: the machine serving the Expo bundle also runs the backend. A device
-// on the same network must call that host, since `localhost` is the device itself.
+// The user enters their self-hosted API's URL on first launch; this only
+// prefills that prompt during development. The machine serving the Expo bundle
+// usually runs the backend too. A device on the same network must call that
+// host, since `localhost` is the device itself. hostUri is only set when the
+// app is served by a dev server.
 const devServerHost = Constants.expoConfig?.hostUri?.split(':')[0];
-const inferredBaseUrl = devServerHost ? `http://${devServerHost}:8080` : 'http://localhost:8080';
-
-export const apiBaseUrl = configuredBaseUrl ?? inferredBaseUrl;
+export const suggestedApiUrl = devServerHost ? `http://${devServerHost}:8080` : '';
 
 const apiClient = axios.create({
-  baseURL: apiBaseUrl,
   // Spring expects repeated keys (`sort=a&sort=b`), not axios' default `sort[]=a`.
   paramsSerializer: { indexes: null },
 });
+
+// Must be called with the stored URL before any request is made.
+export const setApiBaseUrl = (url: string) => {
+  apiClient.defaults.baseURL = url;
+};
+
+// Resolves if `url` answers like the recipe API; rejects otherwise.
+export const checkApiUrl = async (url: string): Promise<void> => {
+  await axios.get(`${url}/beverages/options`, { timeout: 5000 });
+};
 
 export const getBeverages = async (
   params: PageParams = {},
