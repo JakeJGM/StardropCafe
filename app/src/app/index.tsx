@@ -2,7 +2,7 @@ import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, View, type ViewInstance } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getBeverages } from '@/api/api';
@@ -32,8 +32,8 @@ function Menu() {
   const theme = useTheme();
   const listRef = useRef<FlatList<Beverage>>(null);
   const [filters, setFilters] = useState<Filters>(noFilters);
-  const containerRef = useRef<View>(null);
-  const gearRef = useRef<View>(null);
+  const containerRef = useRef<ViewInstance>(null);
+  const gearRef = useRef<ViewInstance>(null);
   // Where the gear's bottom edge is, while the settings menu is open.
   const [settingsMenuTop, setSettingsMenuTop] = useState<number | null>(null);
   const hasFilters = Object.values(filters).some((values) => values.length > 0);
@@ -135,7 +135,7 @@ function Menu() {
         ListFooterComponent={
           isFetchingNextPage
             ? <ActivityIndicator color={theme.text} style={styles.footerSpinner} />
-            : null
+            : undefined
         }
         renderItem={({ item }) => (
           <BeverageCard
